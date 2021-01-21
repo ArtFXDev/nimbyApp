@@ -1,6 +1,6 @@
 {
   "name": "nimby-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "ArtFX TD Dev",
   "license": "MIT",
   "description": "Nimby app use in ArtFx. Use tractor nimby",
@@ -27,12 +27,13 @@
   "build": {
     "productName": "Nimby ArtFx",
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "build/app.ico"
     },
     "nsis": {
       "oneClick": true,
-      "perMachine": true,
       "installerIcon": "build/app.ico",
       "createDesktopShortcut": false,
       "createStartMenuShortcut": false,

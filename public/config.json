@@ -29,5 +29,11 @@
         "UE4Editor",
         "ZBrush",
         "Code"
+    ],
+    "no_free_slot_process": [
+        "kick",
+        "hython",
+        "hick",
+        "Render"
     ]
 }
