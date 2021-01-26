@@ -26,3 +26,6 @@ yarn-debug.log*
 yarn-error.log*
 
 electron-builder.yml
+
+# Password
+public/pass.json

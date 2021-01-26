@@ -60,10 +60,6 @@ var nimbyOn = false;
 setInterval(() => {
   checkForProcess();
 }, 60000);
-setInterval(() => {
-  checkNoFreeSlot();
-}, 60000 * 5);
-
 
 axios.get('http://tractor/Tractor/monitor?q=login&user=root')
   .then(function (response) {
@@ -80,41 +76,12 @@ axios.get(`http://localhost:9005/blade/status`)
     hnm = response.data.hnm;
     nimbyOn = response.data.nimby === "None" ? false : true
     console.log("Your actual nimby is " + nimbyOn)
-    checkForProcess()
+    checkForProcess();
   })
   .catch(function (error) {
     console.log(error);
     console.log("-------------------- ERROR ----------------------------");
   })
-
-async function checkNoFreeSlot() {
-  console.log("Check no free slot ...");
-  axios.get(`http://tractor/Tractor/monitor?q=bdetails&b=${hnm}`)
-    .then((response) => {
-      let blade = response.data;
-      if (blade.note === "no free slots (1)" && blade.as === 1){
-        CONFIG.no_free_slot_process.forEach(processToKill => {
-          killProcess(processToKill);
-        });
-      }
-  })
-  .catch(function (error) {
-    console.log(error);
-    console.log("-------------------- ERROR ----------------------------");
-  })
-}
-
-
-async function killProcess(name) {
-  find("name", name, true).then(list => {
-    if(list.length > 0) {
-      list.forEach(processToKill => {
-        console.log(`${processToKill.name} as been killed`)
-        process.kill(processToKill.pid);
-      })
-    }
-  });
-}
 
 
 async function checkForProcess() {
