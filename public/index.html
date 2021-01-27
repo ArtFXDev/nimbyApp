@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <head>
   <title>Nimby App</title>
   <style>
@@ -12,18 +13,46 @@
     }
   </style>
 </head>
+
 <body>
   <h1>Nimby App</h1>
   <p id="version"></p>
+  <p id="nimbyStatus"></p>
+  <p id="nimbyModStatus"></p>
+  <div id="root"></div>
+  <button id="btn_enable_disable"></button>
+
   <script>
     const { ipcRenderer } = require('electron');
     const version = document.getElementById('version');
-    
+    const nimbyStatusElement = document.getElementById('nimbyStatus');
+    const nimbyModStatusElement = document.getElementById('nimbyModStatus');
+
+    const btnEnableDisable = document.getElementById('btn_enable_disable');
+
     ipcRenderer.send('app_version');
     ipcRenderer.on('app_version', (event, arg) => {
       ipcRenderer.removeAllListeners('app_version');
       version.innerText = 'Version ' + arg.version;
+
     });
+
+    btnEnableDisable.addEventListener('click', (event) => {
+      ipcRenderer.send('on_switch_nimby_mod'); 
+    });
+
+
+
+    ipcRenderer.send('get_nimby_status'); 
+    ipcRenderer.on('nimby_status', (event, arg)=>{
+        console.log()
+        nimbyStatusElement.innerText = `Nimby is ${arg.nimby? "enable" : "disable"} on your  machine`
+        nimbyModStatusElement.innerText = `Nimby mode status :  ${arg.autoMod? "Auto" : "Manual"}`
+
+        btnEnableDisable.innerText = `Switch to ${!arg.autoMod? "Auto" : "Manual"}`
+      });
+
+      
   </script>
 </body>
 <!--

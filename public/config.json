@@ -29,5 +29,6 @@
         "Unity",
         "UE4Editor",
         "ZBrush"
-    ]
+    ],
+    "autoResetNimbyModeHours": 18
 }

@@ -29,8 +29,9 @@ if(isDev) {  // Use dummy repo for test
 }
 // Update check 15 min
 setInterval(() => {
-  autoUpdater.checkForUpdates()
+    autoUpdater.checkForUpdates()
 }, 60000 * 15);
+
 // Notification
 autoUpdater.on('update-available', (info) => {
   const myNotification = new Notification({
@@ -55,11 +56,24 @@ autoUpdater.on('error', (error) => {
 var tsid = undefined;
 var hnm = undefined;
 var nimbyOn = false;
+var nimbyAutoMode = true;
+
+// interval methods
+var checkForProcessEvent = null;
 
 // Check process running evry 1 min
+function triggerCheckForProcessEvent(){
+  checkForProcessEvent = setInterval(() => {
+    checkForProcess();
+  }, 60000);
+}
+// trigger on start
+triggerCheckForProcessEvent()
+
+// check for autoResetNimbyModeHours
 setInterval(() => {
-  checkForProcess();
-}, 60000);
+  checkForAutoResetNimbyMode();
+}, 60000 * 60); // check all hours
 
 axios.get('http://tractor/Tractor/monitor?q=login&user=root')
   .then(function (response) {
@@ -114,6 +128,16 @@ async function checkForProcess() {
   });
 }
 
+
+async function checkForAutoResetNimbyMode() {
+  if(!nimbyAutoMode) return; // useless is already in auto
+  
+  if(new Date().getHours()==CONFIG.autoResetNimbyModeHours){ // trigger at 18H
+    setNimbyModeToAuto()
+  } 
+
+}
+
 function setNimbyOn() {
   axios.get(`http://localhost:9005/blade/ctrl?nimby=1`)
     .then(function () {
@@ -145,6 +169,19 @@ function setNimbyOff() {
     }
   )
 }
+function setNimbyModeToAuto(){
+  autoMod = true;
+  checkForProcess();
+  triggerCheckForProcessEvent()
+
+}
+
+function setNimbyModeToManual(){
+  autoMod = false;
+  nimbyOn = true;
+  clearInterval(checkForProcessEvent)
+}
+
 /*
 ******************
  Tray and panel
@@ -171,7 +208,8 @@ function createPanel() {
 
   mainWindow.loadURL(
     // 
-    isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, "../build/index.html")}`
+    //isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, "../build/index.html")}`
+    isDev ?  `file://${path.join(__dirname, "index.html")}` : `file://${path.join(__dirname, "../build/index.html")}`
   );
   // Event
   mainWindow.on("closed", () => (mainWindow = null));
@@ -186,6 +224,7 @@ function createPanel() {
 function createTray() {
   if (tray != null) return false;
   tray = new Tray(path.join(iconDirPath, "artfx.png"))
+
   tray.setToolTip("Nimby" + (isDev ? "(Dev)" : ""))
   tray.on("click", () => toggleTray())
   tray.on("right-click", () => toggleTray())
@@ -235,3 +274,19 @@ app.on('quit', () => {
 ipcMain.on('app_version', (event) => {
   event.sender.send('app_version', { version: app.getVersion() });
 });
+
+ipcMain.on('on_switch_nimby_mod', (event)=> {
+  
+  nimbyAutoMode = !nimbyAutoMode;
+  if(nimbyAutoMode) {
+    setNimbyModeToAuto();
+  }
+  else
+    setNimbyModeToManual();
+  
+  event.sender.send('nimby_status', {nimby: nimbyOn, autoMod: nimbyAutoMode})
+})
+
+ipcMain.on('get_nimby_status', (event)=> {
+  event.sender.send('nimby_status', {nimby: nimbyOn, autoMod: nimbyAutoMode})
+})
