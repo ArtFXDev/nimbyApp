@@ -40,7 +40,7 @@
 
     ipcRenderer.send('get_nimby_status');
     ipcRenderer.on('nimby_status', (event, arg) => {
-
+      console.log(arg)
       arg.nimby ? marker.className = 'dotGreen' : marker.className = 'dotRed'
 
       nimbyModStatusElement.innerText = `Nimby mode status :  ${arg.autoMod ? "Auto" : "Manual"}`

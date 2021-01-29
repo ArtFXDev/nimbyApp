@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, screen, ipcMain, Notification } = require("electron");
+const { app, BrowserWindow, Tray, screen, ipcMain, Notification, webContents } = require("electron");
 const { autoUpdater } = require('electron-updater');
 const path = require("path");
 const find = require('find-process');
@@ -6,7 +6,7 @@ const axios = require('axios');
 
 var CONFIG = require('./config.json');
 
-const isDev = require('electron-is-dev'); 
+const isDev = require('electron-is-dev');
 const iconDirPath = path.join(__dirname, 'images')
 
 // Window default value
@@ -24,12 +24,12 @@ const panelSize = {
 Update Management
 ******************
 */
-if(isDev) {  // Use dummy repo for test
+if (isDev) {  // Use dummy repo for test
   autoUpdater.updateConfigPath = path.join(path.dirname(__dirname), 'dev-app-update.yml');
 }
 // Update check 15 min
 setInterval(() => {
-    autoUpdater.checkForUpdates()
+  autoUpdater.checkForUpdates()
 }, 60000 * 15);
 
 // Notification
@@ -53,20 +53,17 @@ autoUpdater.on('error', (error) => {
  Nimby Management
 ******************
 */
+
 var tsid = undefined;
 var hnm = undefined;
 var nimbyOn = false;
 var nimbyAutoMode = true;
-
-// interval methods
 var checkForProcessEvent = null;
 
-// Check process running evry 1 min
 function triggerCheckForProcessEvent(){
-  checkForProcessEvent = setInterval(() => {
-    checkForProcess();
-  }, 60000);
+  checkForProcessEvent = setInterval(checkForProcess, 6000);
 }
+
 // trigger on start
 triggerCheckForProcessEvent()
 
@@ -85,25 +82,37 @@ axios.get('http://tractor/Tractor/monitor?q=login&user=root')
     console.log("-------------------- ERROR ----------------------------");
   })
 
-axios.get(`http://localhost:9005/blade/status`)
-  .then(function (response) {
-    hnm = response.data.hnm;
-    nimbyOn = response.data.nimby === "None" ? false : true
-    console.log("Your actual nimby is " + nimbyOn)
-    checkForProcess();
+
+updateNimbyStatusFromAPI()
+.then(()=>{})
+.catch(()=>{})
+
+function updateNimbyStatusFromAPI() {
+  return new Promise((reject, resolve) => {
+    axios.get(`http://localhost:9005/blade/status`)
+      .then(function (response) {
+        hnm = response.data.hnm;
+        nimbyOn = response.data.nimby === "None" ? false : true
+        console.log(`update from api now you nimby is : ${nimbyOn ? "on" : "off"} `)
+        updateTrayIcon()
+        resolve()
+      })
+      .catch(function (error) {
+        console.log(error);
+        console.log("-------------------- ERROR ----------------------------");
+        updateTrayIcon()
+        reject()
+      })
   })
-  .catch(function (error) {
-    console.log(error);
-    console.log("-------------------- ERROR ----------------------------");
-  })
+}
 
 
-async function checkForProcess() {
+function checkForProcess() {
   console.log("Check for Processes ...");
   let processFound = false;
   find("name", "", false)
     .then(list => {
-      for(var i = 0; i < list.length; i++) {
+      for (var i = 0; i < list.length; i++) {
         if (CONFIG.softwares.includes(path.parse(list[i].name).name)) {
           console.log(`Ho, you running ${path.parse(list[i].name).name}.`);
           processFound = true;
@@ -112,74 +121,94 @@ async function checkForProcess() {
       }
     })
     .finally(() => {
-      if(nimbyOn === false && processFound === true) {
+      console.log("process " + processFound)
+      if (nimbyOn === false && processFound === true) {
         console.log("We going to turn nimby ON")
         setNimbyOn()
+        .catch(()=>{})
       }
       if (nimbyOn === true && processFound === false) {
         console.log("We going to turn nimby OFF")
         setNimbyOff()
+        .catch(()=>{})
       }
-      // Update Tray icon
-      if (tray != null) {
-        const _img = nimbyOn ? path.join(iconDirPath, "artfx_green.png") : path.join(iconDirPath, "artfx_red.png")
-        tray.setImage(_img)
-      }
-  });
+      updateTrayIcon()
+    });
 }
 
+function updateTrayIcon() {
+  // Update Tray icon
+  console.log(nimbyOn)
+  if (!tray) return;
 
-async function checkForAutoResetNimbyMode() {
-  if(!nimbyAutoMode) return; // useless is already in auto
-  
-  if(new Date().getHours()==CONFIG.autoResetNimbyModeHours){ // trigger at 18H
+  const _img = nimbyOn ? path.join(iconDirPath, "artfx_green.png") : path.join(iconDirPath, "artfx_red.png")
+  tray.setImage(_img)
+
+  // update from web app
+  if(!mainWindow) return
+  mainWindow.webContents.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
+}
+
+function checkForAutoResetNimbyMode() {
+  if (!nimbyAutoMode) return; // useless is already in auto
+
+  if (new Date().getHours() == CONFIG.autoResetNimbyModeHours) { // trigger at 18H
     setNimbyModeToAuto()
-  } 
+  }
 
 }
 
-function setNimbyOn() {
-  axios.get(`http://localhost:9005/blade/ctrl?nimby=1`)
-    .then(function () {
-      console.log("Nimby set ON");
-      nimbyOn = true;
-      if(hnm && tsid) {
-        axios.get(`http://tractor/Tractor/queue?q=ejectall&blade=${hnm}&tsid=${tsid}`)
-          .then(function () {
-            console.log("Current jobs ejected");
-          }
-        )
-      }
-    })
-    .catch(function (error) {
-      console.log("-------------------- ERROR ----------------------------");
-      console.log("Error setting nimby ON");
-    }
-  )
+async function setNimbyOn() {
+  return new Promise((reject, resolve) => {
+    axios.get(`http://localhost:9005/blade/ctrl?nimby=1`)
+      .then(function () {
+        console.log("Nimby set ON");
+        updateNimbyStatusFromAPI().then(()=>{resolve()})
+        .catch(()=>{resolve()})
+        if (hnm && tsid) {
+          axios.get(`http://tractor/Tractor/queue?q=ejectall&blade=${hnm}&tsid=${tsid}`)
+            .then(function () {
+              console.log("Current jobs ejected");
+            })
+        }
+      })
+      .catch(function (error) {
+        console.log("-------------------- ERROR ----------------------------");
+        console.log("Error setting nimby ON");
+        resolve()
+      })
+
+  })
+
 }
 function setNimbyOff() {
-  axios.get(`http://localhost:9005/blade/ctrl?nimby=0`)
-    .then(function () {
-      console.log("Nimby set OFF");
-      nimbyOn = false;
-    })
-    .catch(function (error) {
-      console.log("-------------------- ERROR ----------------------------");
-      console.log("Error setting nimby OFF");
-    }
-  )
+  return new Promise((reject, resolve) => {
+    axios.get(`http://localhost:9005/blade/ctrl?nimby=0`)
+      .then(function () {
+        console.log("Nimby set OFF");
+        updateNimbyStatusFromAPI().catch(()=>{})
+        resolve()
+      })
+      .catch(function (error) {
+        console.log("-------------------- ERROR ----------------------------");
+        console.log("Error setting nimby OFF");
+        resolve()
+      })
+  })
 }
-function setNimbyModeToAuto(){
+function setNimbyModeToAuto() {
   autoMod = true;
-  checkForProcess();
+  checkForProcess()
   triggerCheckForProcessEvent()
-
 }
 
-function setNimbyModeToManual(){
-  autoMod = false;
-  nimbyOn = true;
-  clearInterval(checkForProcessEvent)
+
+function setNimbyModeToManual() {
+    
+    autoMod = false;
+    setNimbyOn()
+    .catch(()=>{})
+    clearInterval(checkForProcessEvent)
 }
 
 /*
@@ -209,7 +238,7 @@ function createPanel() {
   mainWindow.loadURL(
     // 
     //isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, "../build/index.html")}`
-    isDev ?  `file://${path.join(__dirname, "index.html")}` : `file://${path.join(__dirname, "../build/index.html")}`
+    isDev ? `file://${path.join(__dirname, "index.html")}` : `file://${path.join(__dirname, "../build/index.html")}`
   );
   // Event
   mainWindow.on("closed", () => (mainWindow = null));
@@ -244,7 +273,7 @@ const toggleTray = async () => {
 }
 
 function showPanel(show = true) {
-  if(show) {
+  if (show) {
     mainWindow.setOpacity(1)
     panelSize.visible = true
   } else {
@@ -275,18 +304,20 @@ ipcMain.on('app_version', (event) => {
   event.sender.send('app_version', { version: app.getVersion() });
 });
 
-ipcMain.on('on_switch_nimby_mod', (event)=> {
-  
+ipcMain.on('on_switch_nimby_mod', (event) => {
+
   nimbyAutoMode = !nimbyAutoMode;
-  if(nimbyAutoMode) {
-    setNimbyModeToAuto();
+  if (nimbyAutoMode) {
+    setNimbyModeToAuto()
+    event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
   }
-  else
-    setNimbyModeToManual();
-  
-  event.sender.send('nimby_status', {nimby: nimbyOn, autoMod: nimbyAutoMode})
+  else{
+    setNimbyModeToManual()
+    event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
+  }
+    
 })
 
-ipcMain.on('get_nimby_status', (event)=> {
-  event.sender.send('nimby_status', {nimby: nimbyOn, autoMod: nimbyAutoMode})
+ipcMain.on('get_nimby_status', (event) => {
+  event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
 })
