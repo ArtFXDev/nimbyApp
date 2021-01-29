@@ -197,15 +197,12 @@ function setNimbyOff() {
   })
 }
 function setNimbyModeToAuto() {
-  autoMod = true;
   checkForProcess()
   triggerCheckForProcessEvent()
 }
 
 
 function setNimbyModeToManual() {
-    
-    autoMod = false;
     setNimbyOn()
     .catch(()=>{})
     clearInterval(checkForProcessEvent)
