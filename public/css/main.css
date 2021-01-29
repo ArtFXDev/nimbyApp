@@ -1,0 +1,28 @@
+body {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 20px;
+    font-family: sans-serif;
+    background-color: #eaeaea;
+}
+
+
+.center {
+    text-align: center;
+}
+
+.dotGreen {
+    height: 25px;
+    width: 25px;
+    background-color: rgb(94, 243, 106);
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dotRed {
+    height: 25px;
+    width: 25px;
+    background-color: rgb(223, 121, 121);
+    border-radius: 50%;
+    display: inline-block;
+}

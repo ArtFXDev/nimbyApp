@@ -3,30 +3,27 @@
 <head>
   <title>Nimby App</title>
   <style>
-    body {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 20px;
-      font-family: sans-serif;
-      background-color: #eaeaea;
-      text-align: center;
-    }
+
   </style>
+  <link rel="stylesheet" href="./css/main.css">
 </head>
 
 <body>
-  <h1>Nimby App</h1>
-  <p id="version"></p>
-  <p id="nimbyStatus"></p>
-  <p id="nimbyModStatus"></p>
-  <div id="root"></div>
-  <button id="btn_enable_disable"></button>
+  <div class="center">
+    <h1>Nimby App <span id="marker"></span></h1>
+    <p id="version"></p>
+    <p id="nimbyStatus"></p>
+    <p id="nimbyModStatus"></p>
+    <div id="root"></div>
+    <button id="btn_enable_disable"></button>
+  </div>
 
   <script>
     const { ipcRenderer } = require('electron');
     const version = document.getElementById('version');
     const nimbyStatusElement = document.getElementById('nimbyStatus');
     const nimbyModStatusElement = document.getElementById('nimbyModStatus');
+    const marker = document.getElementById('marker');
 
     const btnEnableDisable = document.getElementById('btn_enable_disable');
 
@@ -38,21 +35,20 @@
     });
 
     btnEnableDisable.addEventListener('click', (event) => {
-      ipcRenderer.send('on_switch_nimby_mod'); 
+      ipcRenderer.send('on_switch_nimby_mod');
+    });
+
+    ipcRenderer.send('get_nimby_status');
+    ipcRenderer.on('nimby_status', (event, arg) => {
+
+      arg.nimby ? marker.className = 'dotGreen' : marker.className = 'dotRed'
+
+      nimbyModStatusElement.innerText = `Nimby mode status :  ${arg.autoMod ? "Auto" : "Manual"}`
+
+      btnEnableDisable.innerText = `Switch to ${!arg.autoMod ? "Auto" : "Manual"}`
     });
 
 
-
-    ipcRenderer.send('get_nimby_status'); 
-    ipcRenderer.on('nimby_status', (event, arg)=>{
-        console.log()
-        nimbyStatusElement.innerText = `Nimby is ${arg.nimby? "enable" : "disable"} on your  machine`
-        nimbyModStatusElement.innerText = `Nimby mode status :  ${arg.autoMod? "Auto" : "Manual"}`
-
-        btnEnableDisable.innerText = `Switch to ${!arg.autoMod? "Auto" : "Manual"}`
-      });
-
-      
   </script>
 </body>
 <!--
