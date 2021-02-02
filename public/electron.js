@@ -5,6 +5,7 @@ const find = require('find-process');
 const axios = require('axios');
 
 var CONFIG = require('./config.json');
+var PASS = require('./pass.json');
 
 const isDev = require('electron-is-dev'); 
 const iconDirPath = path.join(__dirname, 'images')
@@ -61,6 +62,10 @@ setInterval(() => {
   checkForProcess();
 }, 60000);
 
+setInterval(() => {
+  checkForNoFreeSlot()
+}, 60000 * 10);
+
 axios.get('http://tractor/Tractor/monitor?q=login&user=root')
   .then(function (response) {
     tsid = response.data.tsid;
@@ -112,6 +117,30 @@ async function checkForProcess() {
         tray.setImage(_img)
       }
   });
+}
+
+async function checkForNoFreeSlot() {
+  console.log("Check for No Free Slot ...");
+  // Check if we are in no free slots (1)
+  axios.get(`http://tractor/Tractor/monitor?q=bdetails&b=${hnm}`)
+    .then(function (response) {
+      if (response.data.note == "no free slots (1)" && response.data.as == 1) {
+        // For each process in config kill it
+        CONFIG.no_free_slot_process.forEach(processToKill => {
+          console.log(`Trying to kill : ${processToKill}`)
+          axios.get(`http://localhost:80/kill`, {"name": processToKill, "pass": PASS.pass})
+            .then((response) => {
+              console.log(response.data);
+            })
+            .catch((error) => {
+              console.log(error);
+            })
+        })
+      }
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
 }
 
 function setNimbyOn() {
@@ -170,8 +199,8 @@ function createPanel() {
   });
 
   mainWindow.loadURL(
-    // 
-    isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, "../build/index.html")}`
+    // "http://localhost:3000/"
+    isDev ? `file://${path.join(__dirname, "index.html")}` : `file://${path.join(__dirname, "../build/index.html")}`
   );
   // Event
   mainWindow.on("closed", () => (mainWindow = null));
