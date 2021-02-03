@@ -128,7 +128,7 @@ async function checkForNoFreeSlot() {
         // For each process in config kill it
         CONFIG.no_free_slot_process.forEach(processToKill => {
           console.log(`Trying to kill : ${processToKill}`)
-          axios.get(`http://localhost:80/kill`, {"name": processToKill, "pass": PASS.pass})
+          axios.post(`http://localhost:80/kill`, {"name": processToKill, "pass": PASS.pass})
             .then((response) => {
               console.log(response.data);
             })
