@@ -1,0 +1,141 @@
+body {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 20px;
+    font-family: sans-serif;
+    background-color: #eaeaea;
+}
+
+#version {
+    position: absolute;
+    font-size: small;
+    top: 5px;
+    right: 5px;
+    margin: 0;
+}
+
+.center {
+    text-align: center;
+}
+
+#legend {
+    position: absolute;
+    left: 5px;
+    height: 100px;
+    bottom: 0;
+    text-align: left;
+    font-size: small;
+}
+.legend-line {
+    display: flex;
+    height: 25px;
+    margin-bottom: 5px;
+    flex: 1 0 auto;
+}
+.legend-text {
+    height: 25px;
+    vertical-align: middle;
+    padding-top: 6px;
+    padding-left: 5px;
+}
+.legend-text.smaller {
+    font-size: smaller;
+    position: absolute;
+    bottom: 1px;
+    left: 1px;
+}
+
+
+.dotGreen {
+    height: 25px;
+    width: 25px;
+    background-color: rgb(133, 231, 142);
+    border-radius: 50%;
+    display: inline-block;
+    flex: none;
+}
+
+.dotRed {
+    height: 25px;
+    width: 25px;
+    background-color: rgb(223, 121, 121);
+    border-radius: 50%;
+    display: inline-block;
+    flex: none;
+}
+
+#main_switch {
+    display: flex;
+    height: 34px;
+    width: 70%;
+    margin: auto;
+} 
+
+.switchSpan {
+    line-height: 1.5;
+    flex: 1 0 auto;
+    padding-top: 6px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+  
+.slider {
+    position: absolute;
+    cursor: pointer;
+    border-radius: 34px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+  
+.slider:before {
+    position: absolute;
+    content: "";
+    border-radius: 50%;
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+}
+
+.safeText {
+    color:  rgb(0, 141, 14);
+    display: inline-block;
+}
+
+.unsafeText {
+    color: rgb(116, 0, 0);
+    display: inline-block;
+}

@@ -30,10 +30,12 @@
         "UE4Editor",
         "ZBrush"
     ],
+    "autoResetNimbyModeHours": 18,
     "no_free_slot_process": [
         "kick",
         "hython",
         "hick",
-        "Render"
+        "Render",
+        "mantra"
     ]
 }
