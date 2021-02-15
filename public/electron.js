@@ -5,6 +5,7 @@ const find = require('find-process');
 const axios = require('axios');
 
 var CONFIG = require('./config.json');
+var PASS = require('./pass.json')
 
 const isDev = require('electron-is-dev');
 const iconDirPath = path.join(__dirname, 'images')
@@ -61,7 +62,7 @@ var nimbyAutoMode = true;
 var checkForProcessEvent = null;
 
 function triggerCheckForProcessEvent(){
-  checkForProcessEvent = setInterval(checkForProcess, 6000);
+  checkForProcessEvent = setInterval(checkForProcess, 60000);
 }
 
 // trigger on start
@@ -71,6 +72,10 @@ triggerCheckForProcessEvent()
 setInterval(() => {
   checkForAutoResetNimbyMode();
 }, 60000 * 60); // check all hours
+// Check for no free slot
+setInterval(() => {
+  checkForNoFreeSlot();
+}, 60000 * 5)
 
 axios.get('http://tractor/Tractor/monitor?q=login&user=root')
   .then(function (response) {
@@ -136,6 +141,30 @@ function checkForProcess() {
     });
 }
 
+async function checkForNoFreeSlot() {
+  console.log("Check for No Free Slot ...");
+  // Check if we are in no free slots (1)
+  axios.get(`http://tractor/Tractor/monitor?q=bdetails&b=${hnm}`)
+    .then(function (response) {
+      if (response.data.note == "no free slots (1)" && response.data.as == 1) {
+        // For each process in config kill it
+        CONFIG.no_free_slot_process.forEach(processToKill => {
+          console.log(`Trying to kill : ${processToKill}`)
+          axios.post(`http://localhost:80/kill`, {"name": processToKill, "pass": PASS.pass})
+            .then((response) => {
+              console.log(response.data);
+            })
+            .catch((error) => {
+              console.log(error);
+            })
+        })
+      }
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+}
+
 function updateTrayIcon() {
   // Update Tray icon
   console.log(nimbyOn)
@@ -150,7 +179,7 @@ function updateTrayIcon() {
 }
 
 function checkForAutoResetNimbyMode() {
-  if (!nimbyAutoMode) return; // useless is already in auto
+  if (nimbyAutoMode) return; // useless is already in auto
 
   if (new Date().getHours() == CONFIG.autoResetNimbyModeHours) { // trigger at 18H
     setNimbyModeToAuto()
@@ -177,10 +206,9 @@ async function setNimbyOn() {
         console.log("Error setting nimby ON");
         resolve()
       })
-
   })
-
 }
+
 function setNimbyOff() {
   return new Promise((reject, resolve) => {
     axios.get(`http://localhost:9005/blade/ctrl?nimby=0`)
@@ -196,16 +224,18 @@ function setNimbyOff() {
       })
   })
 }
+
 function setNimbyModeToAuto() {
+  nimbyAutoMode = true
   checkForProcess()
   triggerCheckForProcessEvent()
 }
 
-
 function setNimbyModeToManual() {
-    setNimbyOn()
-    .catch(()=>{})
-    clearInterval(checkForProcessEvent)
+  nimbyAutoMode = false
+  setNimbyOn()
+   .catch(()=>{})
+  clearInterval(checkForProcessEvent)
 }
 
 /*
@@ -235,7 +265,7 @@ function createPanel() {
   mainWindow.loadURL(
     // 
     //isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, "../build/index.html")}`
-    isDev ? `file://${path.join(__dirname, "index.html")}` : `file://${path.join(__dirname, "../build/index.html")}`
+    isDev ? `file://${path.join(__dirname, "index.html")}` : `file://${path.join(__dirname, "index.html")}`
   );
   // Event
   mainWindow.on("closed", () => (mainWindow = null));
@@ -243,6 +273,7 @@ function createPanel() {
     mainWindow.show()
   });
   mainWindow.on("blur", () => {
+    if (isDev == true) return
     showPanel(false)
   });
 }
@@ -302,17 +333,14 @@ ipcMain.on('app_version', (event) => {
 });
 
 ipcMain.on('on_switch_nimby_mod', (event) => {
-
-  nimbyAutoMode = !nimbyAutoMode;
   if (nimbyAutoMode) {
-    setNimbyModeToAuto()
-    event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
-  }
-  else{
     setNimbyModeToManual()
     event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
   }
-    
+  else{
+    setNimbyModeToAuto()
+    event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
+  }
 })
 
 ipcMain.on('get_nimby_status', (event) => {

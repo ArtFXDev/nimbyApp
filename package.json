@@ -1,6 +1,6 @@
 {
   "name": "nimby-app",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "author": "ArtFX TD Dev",
   "license": "MIT",
   "description": "Nimby app use in ArtFx. Use tractor nimby",
@@ -10,19 +10,16 @@
     "axios": "^0.21.1",
     "electron-is-dev": "^1.2.0",
     "electron-updater": "^4.3.5",
-    "find-process": "^1.4.4",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "react-scripts": "4.0.1"
+    "find-process": "^1.4.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "electron": "electron .",
     "react-build": "react-scripts build",
     "electron-build": "electron-builder",
-    "dev": "concurrently \"npm run start\" \"wait-on http://localhost:3000 && electron .\"",
-    "build": "npm run react-build && electron-builder build --win --publish never",
-    "deploy": "npm run react-build && electron-builder build --win --publish always"
+    "dev": "concurrently \"npm run start\" \"electron .\"",
+    "build": "electron-builder build --win --publish never",
+    "deploy": "electron-builder build --win --publish always"
   },
   "build": {
     "productName": "Nimby ArtFx",
@@ -55,7 +52,6 @@
   "devDependencies": {
     "concurrently": "^5.3.0",
     "electron": "^11.1.1",
-    "electron-builder": "^22.9.1",
-    "wait-on": "^5.2.1"
+    "electron-builder": "^22.9.1"
   }
 }
