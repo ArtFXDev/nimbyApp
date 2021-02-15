@@ -90,7 +90,7 @@ axios.get('http://tractor/Tractor/monitor?q=login&user=root')
 
 updateNimbyStatusFromAPI()
 .then(()=>{})
-.catch(()=>{})
+.catch((_e)=>{`Error updateNimbyStatusFromAPI : ${_e} `})
 
 function updateNimbyStatusFromAPI() {
   return new Promise((reject, resolve) => {
@@ -193,7 +193,7 @@ async function setNimbyOn() {
       .then(function () {
         console.log("Nimby set ON");
         updateNimbyStatusFromAPI().then(()=>{resolve()})
-        .catch(()=>{resolve()})
+        .catch((_e)=>{`Error updateNimbyStatusFromAPI in set nimbyOn : ${_e} `; reject()})
         if (hnm && tsid) {
           axios.get(`http://tractor/Tractor/queue?q=ejectall&blade=${hnm}&tsid=${tsid}`)
             .then(function () {
@@ -204,7 +204,7 @@ async function setNimbyOn() {
       .catch(function (error) {
         console.log("-------------------- ERROR ----------------------------");
         console.log("Error setting nimby ON");
-        resolve()
+        reject()
       })
   })
 }
@@ -214,28 +214,38 @@ function setNimbyOff() {
     axios.get(`http://localhost:9005/blade/ctrl?nimby=0`)
       .then(function () {
         console.log("Nimby set OFF");
-        updateNimbyStatusFromAPI().catch(()=>{})
+        updateNimbyStatusFromAPI()
+        .catch((_e)=>{`Error updateNimbyStatusFromAPI in setNimbyOff: ${_e} `})
         resolve()
       })
       .catch(function (error) {
         console.log("-------------------- ERROR ----------------------------");
         console.log("Error setting nimby OFF");
-        resolve()
+        reject()
       })
   })
 }
 
 function setNimbyModeToAuto() {
   nimbyAutoMode = true
+  return new Promise((resolve) => {
   checkForProcess()
   triggerCheckForProcessEvent()
+  resolve()
+  })
 }
 
 function setNimbyModeToManual() {
-  nimbyAutoMode = false
-  setNimbyOn()
-   .catch(()=>{})
-  clearInterval(checkForProcessEvent)
+  return new Promise((resolve) => {
+    nimbyAutoMode = false;
+    setNimbyOn()
+    .catch((_e)=>{`set nimby on in setNimbyModeToManual error : ${_e}`})
+    .then(()=>{
+      clearInterval(checkForProcessEvent)
+      resolve()
+    })
+    
+  })
 }
 
 /*
@@ -273,7 +283,6 @@ function createPanel() {
     mainWindow.show()
   });
   mainWindow.on("blur", () => {
-    if (isDev == true) return
     showPanel(false)
   });
 }
@@ -334,12 +343,14 @@ ipcMain.on('app_version', (event) => {
 
 ipcMain.on('on_switch_nimby_mod', (event) => {
   if (nimbyAutoMode) {
-    setNimbyModeToManual()
-    event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
+    setNimbyModeToManual().then(() => {
+      event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
+    });
   }
   else{
-    setNimbyModeToAuto()
-    event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
+    setNimbyModeToAuto().then(() => {
+      event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
+    });
   }
 })
 

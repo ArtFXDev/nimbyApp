@@ -52,7 +52,6 @@
 
     ipcRenderer.send('get_nimby_status');
     ipcRenderer.on('nimby_status', (event, arg) => {
-      console.log(arg)
       arg.nimby ? marker.className = 'dotGreen' : marker.className = 'dotRed'
       nimbyStatusElement.innerText = `Nimby is : ${arg.nimby ? "ON" : "OFF"}`
       btnModeEnableDisable.checked = arg.autoMod ? true : false;
