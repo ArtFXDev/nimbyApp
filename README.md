@@ -1,11 +1,40 @@
-# Nimby App
+# Nimby in Tractor 
 
-This app is use for automaticly set the tractor nimby when user use this pc.
-It's use electron (tray icon) and react (main page).
+"NIMBY" : "Not In My Back Yard"  
+
+The Nimby App controls if Tractor renders on blades that can be used to work during the day. 
+
+
+https://rmanwiki.pixar.com/display/TRA/NIMBY
+
+## Nimby field
+
+The "NIMBY" field is set on a Tractor blade.
+
+It has 3 states:
+```
+1 - will only accept local jobs spooled from that blade's host (local jobs).
+0 - will accept jobs from anyone (external jobs).
+username - will only accept jobs from the named user.
+```
+
+## Nimby App
+
+The user chooses between 2 states:
+- **Manual** - Nimby ON : the Nimby field is set to 1, blocking external jobs.  
+- **Auto** : - Nimby OFF : The Nimby field is set to 0, allowing external jobs.  
+
+When the mode is "Auto", the app checks automatically if a significant software is started (as defined in `config.json`).
+If such a software is launched, the Nimby field is set to 1 (blocking).
+
 
 ## Dev Doc
 
-This app have script dev, build and deploy.
+It's use electron (tray icon) and react (main page).
+
+It uses the Tractor URL Api (and currently the Tactor Controller). See [tractor](https://github.com/ArtFXDev/tractor).
+
+This app has dev, build and deploy scripts.
 
 ### Important files
 
