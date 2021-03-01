@@ -28,7 +28,8 @@
         "TVPaint Animation 10 (32bits)",
         "Unity",
         "UE4Editor",
-        "ZBrush"
+        "ZBrush",
+        "metashape"
     ],
     "autoResetNimbyModeHours": 18,
     "no_free_slot_process": [
