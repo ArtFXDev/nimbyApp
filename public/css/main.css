@@ -64,7 +64,7 @@ body {
     flex: none;
 }
 
-#main_switch {
+.main_switch {
     display: flex;
     height: 34px;
     width: 70%;

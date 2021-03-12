@@ -29,9 +29,15 @@
         "Unity",
         "UE4Editor",
         "ZBrush",
-        "metashape"
+        "metashape",
+        "wstart"
     ],
     "autoResetNimbyModeHours": 18,
+    "removeProcessCheckHours": {
+        "start": 19,
+        "end": 8
+    },
+    "systemIdleTimeLimit": 300,
     "no_free_slot_process": [
         "kick",
         "hython",

@@ -1,6 +1,6 @@
 {
   "name": "nimby-app",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "author": "ArtFX TD Dev",
   "license": "MIT",
   "description": "Nimby app use in ArtFx. Use tractor nimby",
@@ -10,14 +10,13 @@
     "axios": "^0.21.1",
     "electron-is-dev": "^1.2.0",
     "electron-updater": "^4.3.5",
-    "find-process": "^1.4.4"
+    "find-process": "^1.4.4",
+    "os-utils": "0.0.14"
   },
   "scripts": {
-    "start": "react-scripts start",
     "electron": "electron .",
-    "react-build": "react-scripts build",
     "electron-build": "electron-builder",
-    "dev": "concurrently \"npm run start\" \"electron .\"",
+    "dev": "electron .",
     "build": "electron-builder build --win --publish never",
     "deploy": "electron-builder build --win --publish always"
   },
@@ -33,7 +32,7 @@
       "oneClick": true,
       "installerIcon": "build/app.ico",
       "createDesktopShortcut": false,
-      "createStartMenuShortcut": false,
+      "createStartMenuShortcut": true,
       "runAfterFinish": true
     }
   },

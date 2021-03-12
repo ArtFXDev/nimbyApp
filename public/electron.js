@@ -1,8 +1,10 @@
-const { app, BrowserWindow, Tray, screen, ipcMain, Notification, webContents } = require("electron");
+const { app, BrowserWindow, Tray, screen, ipcMain, Notification } = require("electron");
 const { autoUpdater } = require('electron-updater');
+const os = require("os-utils");
 const path = require("path");
 const find = require('find-process');
 const axios = require('axios');
+const electron = require('electron');
 
 var CONFIG = require('./config.json');
 var PASS = require('./pass.json')
@@ -30,7 +32,7 @@ if (isDev) {  // Use dummy repo for test
 }
 // Update check 15 min
 setInterval(() => {
-  autoUpdater.checkForUpdates()
+  autoUpdater.checkForUpdates().catch((_e) => { console.log(_e) })
 }, 60000 * 15);
 
 // Notification
@@ -59,14 +61,14 @@ var tsid = undefined;
 var hnm = undefined;
 var nimbyOn = false;
 var nimbyAutoMode = true;
-var checkForProcessEvent = null;
+var checkIfUsedEvent = null;
 
-function triggerCheckForProcessEvent(){
-  checkForProcessEvent = setInterval(checkForProcess, 60000);
+function triggerCheckIfUsedEvent(){
+  checkIfUsedEvent = setInterval(checkIfUsed, 60000);
 }
 
 // trigger on start
-triggerCheckForProcessEvent()
+triggerCheckIfUsedEvent()
 
 // check for autoResetNimbyModeHours
 setInterval(() => {
@@ -111,34 +113,52 @@ function updateNimbyStatusFromAPI() {
   })
 }
 
+function checkIfUsed() {
+  console.log("Check if the computer is used ...");
+  // Always check if the pc is idle from 5 min
+  if (electron.powerMonitor.getSystemIdleTime() < CONFIG.systemIdleTimeLimit){
+    setNimbyOn().catch(()=>{})
+  }
+  // Check if we check the process (day) or only the resource (night)
+  else if ((new Date().getHours() >= CONFIG.removeProcessCheckHours["start"])
+      || (new Date().getHours() <= CONFIG.removeProcessCheckHours["end"])) {
+    os.cpuUsage((cpu) => {
+      console.log("CPU : " + (cpu * 100))
+      if ((cpu * 100) < 50) {
+        setNimbyOff().catch(()=>{})
+      }
+    })
+  }
+  else {
+    checkForProcess()
+  }
+  updateTrayIcon()
+}
 
 function checkForProcess() {
   console.log("Check for Processes ...");
   let processFound = false;
   find("name", "", false)
-    .then(list => {
-      for (var i = 0; i < list.length; i++) {
-        if (CONFIG.softwares.includes(path.parse(list[i].name).name)) {
-          console.log(`Ho, you running ${path.parse(list[i].name).name}.`);
-          processFound = true;
-          break;
-        }
+  .then(list => {
+    for (let i = 0; i < list.length; i++) {
+      if (CONFIG.softwares.includes(path.parse(list[i].name).name)) {
+        console.log(`Ho, you running ${path.parse(list[i].name).name}.`);
+        processFound = true;
+        break;
       }
-    })
-    .finally(() => {
-      console.log("process " + processFound)
-      if (nimbyOn === false && processFound === true) {
-        console.log("We going to turn nimby ON")
-        setNimbyOn()
-        .catch(()=>{})
-      }
-      if (nimbyOn === true && processFound === false) {
-        console.log("We going to turn nimby OFF")
-        setNimbyOff()
-        .catch(()=>{})
-      }
-      updateTrayIcon()
-    });
+    }
+  })
+  .finally(() => {
+    console.log("process " + processFound)
+    if (nimbyOn === false && processFound === true) {
+      console.log("We going to turn nimby ON")
+      setNimbyOn().catch(()=>{})
+    }
+    if (nimbyOn === true && processFound === false) {
+      console.log("We going to turn nimby OFF")
+      setNimbyOff().catch(()=>{})
+    }
+  });
 }
 
 async function checkForNoFreeSlot() {
@@ -146,7 +166,7 @@ async function checkForNoFreeSlot() {
   // Check if we are in no free slots (1)
   axios.get(`http://tractor/Tractor/monitor?q=bdetails&b=${hnm}`)
     .then(function (response) {
-      if (response.data.note == "no free slots (1)" && response.data.as == 1) {
+      if (response.data.note === "no free slots (1)" && response.data.as === 1) {
         // For each process in config kill it
         CONFIG.no_free_slot_process.forEach(processToKill => {
           console.log(`Trying to kill : ${processToKill}`)
@@ -181,8 +201,8 @@ function updateTrayIcon() {
 function checkForAutoResetNimbyMode() {
   if (nimbyAutoMode) return; // useless is already in auto
 
-  if (new Date().getHours() == CONFIG.autoResetNimbyModeHours) { // trigger at 18H
-    setNimbyModeToAuto()
+  if (new Date().getHours() === CONFIG.autoResetNimbyModeHours) { // trigger at 18H
+    setNimbyModeToAuto().then(r => {})
   }
 
 }
@@ -209,7 +229,7 @@ async function setNimbyOn() {
   })
 }
 
-function setNimbyOff() {
+async function setNimbyOff() {
   return new Promise((reject, resolve) => {
     axios.get(`http://localhost:9005/blade/ctrl?nimby=0`)
       .then(function () {
@@ -227,11 +247,11 @@ function setNimbyOff() {
 }
 
 function setNimbyModeToAuto() {
-  nimbyAutoMode = true
+  nimbyAutoMode = true;
   return new Promise((resolve) => {
-  checkForProcess()
-  triggerCheckForProcessEvent()
-  resolve()
+    checkIfUsed();
+    triggerCheckIfUsedEvent();
+    resolve();
   })
 }
 
@@ -241,7 +261,7 @@ function setNimbyModeToManual() {
     setNimbyOn()
     .catch((_e)=>{`set nimby on in setNimbyModeToManual error : ${_e}`})
     .then(()=>{
-      clearInterval(checkForProcessEvent)
+      clearInterval(checkIfUsedEvent)
       resolve()
     })
     
@@ -328,7 +348,7 @@ app.on("ready", () => {
 });
 
 app.setLoginItemSettings({
-  openAtLogin: true,
+  "openAtLogin": true,
 });
 
 app.on('quit', () => {
@@ -341,7 +361,7 @@ ipcMain.on('app_version', (event) => {
   event.sender.send('app_version', { version: app.getVersion() });
 });
 
-ipcMain.on('on_switch_nimby_mod', (event) => {
+ipcMain.on('on_switch_nimby_mod', (event, isAuto) => {
   if (nimbyAutoMode) {
     setNimbyModeToManual().then(() => {
       event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
@@ -351,6 +371,15 @@ ipcMain.on('on_switch_nimby_mod', (event) => {
     setNimbyModeToAuto().then(() => {
       event.sender.send('nimby_status', { nimby: nimbyOn, autoMod: nimbyAutoMode })
     });
+  }
+})
+
+ipcMain.on('on_switch_nimby', (event, isNimby) => {
+  if (isNimby) {
+    setNimbyOn().catch(() => {})
+  }
+  else {
+    setNimbyOff().catch(() => {})
   }
 })
 
