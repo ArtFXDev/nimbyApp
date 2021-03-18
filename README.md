@@ -62,3 +62,10 @@ This build electron and react code.
 
 When you have working code lauch `npm run deploy` to send build `.exe` to github release.
 You will need to set a github token with repo right. When you have it, use GH_TOKEN environment variable to avoid tocken publish.
+
+#### Config
+
+Explain some wird config value:
+
+ramUsageLimits: The ram need in minimum for the max ram in key
+like "12": 9 say if you have max ram < 12Go, and you dont have 9Go remaining, pass nimby ON

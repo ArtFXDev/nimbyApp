@@ -34,7 +34,12 @@
   <div id="legend">
     <div class="legend-line"><span class="dotGreen"></span><span class="legend-text">Nimby is ON : You are protected from renderfarm jobs</span></div>
     <div class="legend-line"><span class="dotRed"></span><span class="legend-text">Nimby is OFF : Job can be send on your PC (pass in Manual mode to change nimby ON)</span></div>
-    <span class="legend-text smaller">Auto mode will be enable at 18h. <a href="mailto:td5-mtp@artfx.fr" style="margin-left: 120px;" title="td5-mtp@artfx.fr">Contact us.</a></span>
+    <span class="legend-text smaller">
+      Auto mode will be enable at 18h.
+      <span id="seeLogs" style="margin-left: 10px;">see logs</span>
+      <a href="mailto:td5-mtp@artfx.fr" style="margin-left: 50px;" title="td5-mtp@artfx.fr">Contact us.</a>
+    </span>
+
   </div>
 
   <script>
@@ -43,37 +48,46 @@
     const nimbyStatusElement = document.getElementById('nimbyStatus');
     const nimbyModStatusElement = document.getElementById('nimbyModStatus');
     const marker = document.getElementById('marker');
+    const seeLogs = document.getElementById('seeLogs');
 
     const btnModeSwitch = document.getElementById('btn_mode_switch');
     const btnNimbySwitch = document.getElementById('btn_nimby_switch');
     const nimbySwitchDiv = document.getElementById('nimby_switch')
 
+    // Get default value
     ipcRenderer.send('app_version');
+    ipcRenderer.send('get_nimby_status');
     ipcRenderer.on('app_version', (event, arg) => {
       ipcRenderer.removeAllListeners('app_version');
       version.innerText = 'Version ' + arg.version;
-
     });
 
+    // Setup listener
     btnModeSwitch.addEventListener('click', (event) => {
-      ipcRenderer.send('on_switch_nimby_mod', btnModeSwitch.checked);
-      if (nimbySwitchDiv.style.display === "none") {
-        nimbySwitchDiv.style.display = "flex";
-        ipcRenderer.send('on_switch_nimby', btnNimbySwitch.checked); // Reload
-      } else {
-        nimbySwitchDiv.style.display = "none";
-      }
+      ipcRenderer.send('on_switch_nimby_mod', !btnModeSwitch.checked);
     });
+
+    seeLogs.addEventListener('click', () => {
+        ipcRenderer.send('see_logs')
+    })
 
     btnNimbySwitch.addEventListener('click', (event) => {
       ipcRenderer.send('on_switch_nimby', btnNimbySwitch.checked);
     });
 
-    ipcRenderer.send('get_nimby_status');
     ipcRenderer.on('nimby_status', (event, arg) => {
       arg.nimby ? marker.className = 'dotGreen' : marker.className = 'dotRed'
       nimbyStatusElement.innerText = `Nimby is : ${arg.nimby ? "ON" : "OFF"}`
-      btnModeSwitch.checked = !!arg.autoMod;
+    });
+
+    ipcRenderer.on('mode_status', (event, arg) => {
+      btnModeSwitch.checked = arg.autoMod;
+      if (!btnModeSwitch.checked) {
+        nimbySwitchDiv.style.display = "flex";
+        ipcRenderer.send('on_switch_nimby', btnNimbySwitch.checked); // Reload
+      } else {
+        nimbySwitchDiv.style.display = "none";
+      }
     });
 
   </script>

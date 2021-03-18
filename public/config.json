@@ -37,12 +37,19 @@
         "start": 19,
         "end": 8
     },
+    "ramUsageLimits": {
+        "0-12": 9,
+        "12-16": 10,
+        "16-32": 15,
+        "32-64": 20,
+        "64-128": 50
+    },
     "systemIdleTimeLimit": 300,
     "no_free_slot_process": [
         "kick",
         "hython",
         "hick",
-        "Render",
+        "mayabatch",
         "mantra"
     ]
 }
