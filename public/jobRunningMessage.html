@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+
+<head>
+  <title>Nimby App</title>
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+
+<body>
+  <div class="center">
+    <h1>Ho noooo, a job has start on your computer</h1>
+    <p>The job number : <span>0</span> is starting on your pc.</p>
+    <p>No worry, if you wan't to cancel him, click on "I'm working"</p>
+    <br />
+    <img src="https://media.giphy.com/media/JoePLWxLD7cGc/giphy.gif" alt="dislike_gif"/>
+    <br />
+    <button id="btn_close" class="buttonOk">Close and let the job running</button>
+    <button id="btn_work" class="buttonOk checked">I'm working</button>
+  </div>
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    const btnWork = document.getElementById('btn_work');
+    const btnClose = document.getElementById('btn_close');
+    const quote = document.getElementById('quote');
+
+    btnWork.addEventListener('click', (event) => {
+
+    })
+    btnClose.addEventListener('click', (event) => {
+      ipcRenderer.send('msg_close');
+    });
+    ipcRenderer.send('msg_quote');
+    ipcRenderer.on('msg_quote', (event, msg) => {
+      ipcRenderer.removeAllListeners('msg_quote');
+      quote.innerText = msg;
+    });
+  </script>
+</body>

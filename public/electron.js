@@ -6,6 +6,7 @@ const find = require('find-process');
 const axios = require('axios');
 const electron = require('electron');
 const log = require('electron-log');
+var http = require('http');
 
 let CONFIG = require('./config.json');
 let PASS = require('./pass.json')
@@ -23,6 +24,10 @@ const panelSize = {
   width: 356,
   height: 500,
   visible: false
+}
+const messagePanelSize = {
+  width: 356,
+  height: 500,
 }
 
 /*
@@ -84,6 +89,28 @@ setInterval(() => {
 setInterval(() => {
   checkForNoFreeSlot();
 }, 60000 * 5)
+// Check running jobs
+setInterval(() => {
+  asJobRunning();
+}, 60000)
+
+let x = 0;
+let y = 0;
+let fish_drag = false;
+
+setInterval(() => {
+  if (!fish_drag) {
+    const cursor_pos = screen.getCursorScreenPoint();
+    let difx = (cursor_pos.x + 25) - x;
+    let dify = (cursor_pos.y + 25) - y;
+    const length = Math.sqrt(Math.pow(difx, 2) + Math.pow(dify, 2));
+    difx /= length;
+    dify /= length;
+    x += Math.round(difx * 10);
+    y += Math.round(dify * 10);
+    msgWindow.setPosition(x, y);
+  }
+}, 50)
 
 axios.get('http://tractor/Tractor/monitor?q=login&user=root')
   .then(function (response) {
@@ -108,6 +135,28 @@ function updateNimbyStatusFromAPI() {
     })
 }
 
+http.createServer(function (req, res) {
+  res.writeHead(200, {'Content-Type': 'text/plain'});
+  console.log(req)
+  res.write('Hello World!');
+  res.end();
+}).listen(9005);
+
+function asJobRunning() {
+  axios.get(`http://localhost:9005/blade/status`)
+    .then(function (response) {
+      hnm = response.data.hnm;
+      jobData = response.data.pids
+      console.log(jobData)
+      if (jobData.length !== 0) {
+        showMessage(`file://${path.join(__dirname, "jobRunningMessage.html")}`, false);
+      }
+    })
+    .catch(function (error) {
+      log.error(error);
+    })
+}
+
 function checkIfUsed() {
   log.info("Check if the computer is used ...");
   // Always check if the pc is idle from 5 min
@@ -118,7 +167,7 @@ function checkIfUsed() {
   else if ((new Date().getHours() >= CONFIG.removeProcessCheckHours["start"])
       || (new Date().getHours() <= CONFIG.removeProcessCheckHours["end"])) {
     // Check CPU / RAM usage
-    if (checkRamUsage() && checkCPUUsage) {
+    if (checkRamUsage() && checkCPUUsage()) {
       log.info("Your pc is not used, set nimby off")
       setNimbyOff().catch(()=>{})
     }
@@ -306,8 +355,8 @@ function createPanel() {
   });
 
   mainWindow.loadURL(
-    //isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, "../build/index.html")}`
-    isDev ? `file://${path.join(__dirname, "index.html")}` : `file://${path.join(__dirname, "index.html")}`
+    //isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, "../build/panel.html")}`
+    isDev ? `file://${path.join(__dirname, "panel.html")}` : `file://${path.join(__dirname, "panel.html")}`
   );
   // Event
   mainWindow.on("closed", () => (mainWindow = null));
@@ -353,15 +402,17 @@ function showPanel(show = true) {
   }
 }
 
-function showMessage(link, frame=false) {
+function showMessage(link, frame=false, transparent=false) {
   msgWindow = new BrowserWindow({
-    width: 500,
-    height: 400,
+    width: 100,
+    height: 100,
+    transparent: transparent,
     frame: frame,
     alwaysOnTop: true,
     resizable: frame,
     maximizable: frame,
     minimizable: frame,
+
     webPreferences: { nodeIntegration: true }
   });
   msgWindow.loadURL(link);
@@ -374,7 +425,22 @@ app.on("ready", () => {
   }
   createTray()
   createPanel()
+  showMessage(`file://${path.join(__dirname, "fish.html")}`, false, true)
+
+  msgWindow.hookWindowMessage(Number.parseInt('0x0231'), (wParam,lParam)=>{
+    console.log("moving");
+    fish_drag = true;
+  });
+
+  msgWindow.hookWindowMessage(Number.parseInt('0x0232'),(wParam,lParam)=>{
+    console.log("finish move");
+    x = msgWindow.getPosition()[0];
+    y = msgWindow.getPosition()[1];
+    fish_drag = false;
+  });
 });
+
+
 
 app.setLoginItemSettings({
   "openAtLogin": true,
@@ -406,7 +472,7 @@ ipcMain.on('get_nimby_status', (event) => {
 })
 
 ipcMain.on('see_logs', () => {
-  showMessage("file://C:/Users/Souls/AppData/Roaming/nimby-app/logs/main.log", true)
+  showMessage("file://C:/Users/etudiant/AppData/Roaming/nimby-app/logs/main.log", true)
 })
 
 /*
@@ -422,3 +488,24 @@ ipcMain.on('msg_close', (event) => {
   msgWindow.close()
   msgWindow = null
 });
+
+/*
+Fish game
+ */
+
+ipcMain.on('fish_clicked', () => {
+  console.log("fish click");
+  const myNotification = new Notification({
+    "title": "Ye you catch a fish"
+  });
+  myNotification.show();
+  msgWindow.close();
+})
+
+ipcMain.on('fish_drag', () => {
+  console.log("Dragggg")
+  fish_drag = true;
+})
+ipcMain.on('fish_stop_drag', () => {
+  fish_drag = false;
+})

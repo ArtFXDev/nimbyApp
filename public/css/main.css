@@ -158,4 +158,8 @@ input:checked + .slider:before {
     cursor: pointer;
 }
 
+.checked {
+    background-color: rgba(133, 231, 142, 0.5);
+}
+
 

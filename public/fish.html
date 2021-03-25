@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<body style="width: 45px;height: 45px;">
+  <img id="fish" draggable="true" src="https://media.giphy.com/media/aaoiJuarHM1b2/giphy.gif" style="width: 45px;height: 45px;" alt="poisson" />
+</body>
+<script>
+    const { ipcRenderer } = require('electron');
+
+    const fish = document.getElementById('fish');
+    document.body.style.webkitAppRegion = "drag"
+    fish.webkitAppRegion = "no-drag"
+    fish.addEventListener('click', (event) => {
+      ipcRenderer.send('fish_clicked');
+    });
+
+    fish.addEventListener('dragstart', () => {
+      console.log("IS DRAG");
+      ipcRenderer.send('fish_drag');
+    });
+    fish.addEventListener('dragend', () => {
+      console.log("IS DRAG");
+      ipcRenderer.send('fish_stop_drag');
+    });
+
+</script>
+</html>
