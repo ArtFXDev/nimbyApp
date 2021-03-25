@@ -94,24 +94,6 @@ setInterval(() => {
   asJobRunning();
 }, 60000)
 
-let x = 0;
-let y = 0;
-let fish_drag = false;
-
-setInterval(() => {
-  if (!fish_drag) {
-    const cursor_pos = screen.getCursorScreenPoint();
-    let difx = (cursor_pos.x + 25) - x;
-    let dify = (cursor_pos.y + 25) - y;
-    const length = Math.sqrt(Math.pow(difx, 2) + Math.pow(dify, 2));
-    difx /= length;
-    dify /= length;
-    x += Math.round(difx * 10);
-    y += Math.round(dify * 10);
-    msgWindow.setPosition(x, y);
-  }
-}, 50)
-
 axios.get('http://tractor/Tractor/monitor?q=login&user=root')
   .then(function (response) {
     tsid = response.data.tsid;
@@ -427,17 +409,7 @@ app.on("ready", () => {
   createPanel()
   showMessage(`file://${path.join(__dirname, "fish.html")}`, false, true)
 
-  msgWindow.hookWindowMessage(Number.parseInt('0x0231'), (wParam,lParam)=>{
-    console.log("moving");
-    fish_drag = true;
-  });
 
-  msgWindow.hookWindowMessage(Number.parseInt('0x0232'),(wParam,lParam)=>{
-    console.log("finish move");
-    x = msgWindow.getPosition()[0];
-    y = msgWindow.getPosition()[1];
-    fish_drag = false;
-  });
 });
 
 
