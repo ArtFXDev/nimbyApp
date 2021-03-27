@@ -1,3 +1,10 @@
+/*
+=================================
+ This app create a tray icon and
+   a panel when tray is click.
+        Use src/message
+=================================
+ */
 const { app, BrowserWindow, Tray, screen, ipcMain, Notification } = require("electron");
 const os = require("os-utils");
 const path = require("path");
@@ -6,7 +13,7 @@ const axios = require('axios');
 const electron = require('electron');
 const log = require('electron-log');
 
-const { messageJob, messageHighUsage } = require('../message/message')
+const { messageJob, messageHighUsage, messageLogs } = require('../message/message')
 
 let CONFIG = require('../config/config.json');
 let PASS = require('../config/pass.json')
@@ -41,27 +48,6 @@ let notifyHighUsage = false;
 function triggerAutoInterval() {
   autoInterval = setInterval(checkIfUsed, 60000);
 }
-
-// trigger on start
-triggerAutoInterval()
-
-// check for autoResetNimbyModeHours
-setInterval(() => {
-  checkForAutoResetNimbyMode();
-}, 60000 * 60); // check all hours
-// Check for no free slot
-setInterval(() => {
-  checkForNoFreeSlot();
-}, 60000 * 5)
-
-axios.get('http://tractor/Tractor/monitor?q=login&user=root')
-  .then(function (response) {
-    tsid = response.data.tsid;
-    log.info("Tractor tsid : " + tsid);
-  })
-  .catch(function (error) {
-    log.error(error);
-  })
 
 function updateNimbyStatusFromAPI() {
   axios.get(`http://localhost:9005/blade/status`)
@@ -148,10 +134,11 @@ function checkCPUUsage() {
 }
 
 function checkRamUsage() {
-  let maxRam = Math.round(os.totalmem() / Math.pow(1024, 1), 2)
+  let maxRam = Math.round(os.totalmem() / Math.pow(1024, 1))
+  console.log('RAM : ' + maxRam)
   Object.keys(CONFIG.ramUsageLimits).forEach(rule => {
     if (maxRam > rule.split('-')[0] && maxRam <= rule.split('-')[1]) {
-      let freeMemory = Math.round(os.freemem() / Math.pow(1024, 1), 2)
+      let freeMemory = Math.round(os.freemem() / Math.pow(1024, 1))
       if (freeMemory < CONFIG.ramUsageLimits[rule]) {
         return true
       }
@@ -309,9 +296,6 @@ function createPanel() {
   mainWindow.on("blur", () => {
     showPanel(false)
   });
-
-  messageJob();
-  messageHighUsage();
 }
 
 function createTray() {
@@ -348,6 +332,32 @@ function showPanel(show = true) {
   }
 }
 
+function run() {
+  return axios.get('http://tractor/Tractor/monitor?q=login&user=root')
+    .then(function (response) {
+      tsid = response.data.tsid;
+      log.info("Tractor tsid : " + tsid);
+
+      // trigger on start
+      triggerAutoInterval()
+      // check for autoResetNimbyModeHours
+      setInterval(() => {
+        checkForAutoResetNimbyMode();
+      }, 60000 * 60); // check all hours
+      // Check for no free slot
+      setInterval(() => {
+        checkForNoFreeSlot();
+      }, 60000 * 5)
+
+      createTray()
+      createPanel()
+      return 0;
+    })
+    .catch(function (error) {
+      return -1;
+    })
+}
+
 app.on('quit', () => {
   try {
     tray.destroy()
@@ -374,7 +384,9 @@ ipcMain.on('get_nimby_status', (event) => {
 })
 
 ipcMain.on('see_logs', () => {
-  showMessage("file://C:/Users/Souls/AppData/Roaming/nimby-app/logs/main.log", true)
+  //
+  // C:/Users/etudiant/AppData/Roaming/nimby-app/logs/main.log
+  messageLogs("file://C:/Users/Souls/Desktop/test.log")
 })
 
-module.exports = { createTray, createPanel };
+module.exports = { run };

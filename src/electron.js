@@ -6,11 +6,14 @@
  */
 const { app, Notification } = require("electron");
 const { autoUpdater } = require('electron-updater');
+const exec = require('child_process').execFile;
 const path = require("path");
+const fs = require('fs')
 const log = require('electron-log');
 const isDev = require('electron-is-dev');
 
 const nimby = require('./nimby/nimby');
+let CONFIG = require('./config/config.json');
 
 /*
 ******************
@@ -51,10 +54,52 @@ app.on("ready", () => {
   if (!isDev) {
     autoUpdater.checkForUpdates().catch((error) => { log.error(error) })
   }
-  nimby.createTray()
-  nimby.createPanel()
+  const response = runNimby();
 });
 
+function runNimby() {
+  nimby.run()
+    .then((result) => {
+      if(result === -1) {
+        log.error("Tractor is not running !!!!!!!!!")
+        tryTractorLaunch().then((result) => {
+          if(result === 0) {
+            runNimby()
+          }
+        })
+      }
+    })
+    .catch(function (error) {
+      log.error("Tractor is not running !!!!!!!!!")
+      tryTractorLaunch().then((result) => {
+        if(result === 0) {
+          runNimby()
+        }
+        else {
+          app.exit(0);
+        }
+      })
+    })
+}
+
+async function tryTractorLaunch() {
+  if (fs.existsSync(CONFIG.tractorPath)) {
+    exec(CONFIG.tractorPath, function(err, data) {
+      if(err) {
+        log.error(err)
+        return -1;
+      }
+      else {
+        return 0;
+      }
+    })
+  }
+  else {
+    log.error("Tractor not install !!!!!!!!!");
+    app.exit(0);
+  }
+}
+
 app.on('quit', () => {
-  log.info("========= Good Bye ! =========")
+  log.info("========= Good Bye ! =========");
 });

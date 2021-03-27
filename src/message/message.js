@@ -27,4 +27,8 @@ function messageHighUsage() {
   });
 }
 
-module.exports = { messageJob, messageHighUsage };
+function messageLogs(logPath) {
+
+}
+
+module.exports = { messageJob, messageHighUsage, messageLogs };
