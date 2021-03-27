@@ -29,4 +29,4 @@ yarn.lock
 electron-builder.yml
 
 # Password
-public/pass.json
+src/config/pass.json

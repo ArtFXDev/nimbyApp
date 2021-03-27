@@ -1,5 +1,4 @@
 const { app, BrowserWindow, Tray, screen, ipcMain, Notification } = require("electron");
-const { autoUpdater } = require('electron-updater');
 const os = require("os-utils");
 const path = require("path");
 const find = require('find-process');
@@ -7,16 +6,17 @@ const axios = require('axios');
 const electron = require('electron');
 const log = require('electron-log');
 
-let CONFIG = require('./config.json');
-let PASS = require('./pass.json')
-let QUOTES = require('./quotes.json')
+const { messageJob, messageHighUsage } = require('../message/message')
+
+let CONFIG = require('../config/config.json');
+let PASS = require('../config/pass.json')
+let QUOTES = require('../config/quotes.json')
 
 const isDev = require('electron-is-dev');
-const iconDirPath = path.join(__dirname, 'images')
+const iconDirPath = path.join(path.dirname(__dirname), 'images')
 
 // Window default value
 let mainWindow;
-let msgWindow;
 let tray = null
 
 const panelSize = {
@@ -24,37 +24,6 @@ const panelSize = {
   height: 500,
   visible: false
 }
-
-/*
-******************
-Update Management
-******************
-*/
-if (isDev) {  // Use dummy repo for test
-  autoUpdater.updateConfigPath = path.join(path.dirname(__dirname), 'dev-app-update.yml');
-}
-// Update check 15 min
-setInterval(() => {
-  autoUpdater.checkForUpdates()
-      .catch((error) => { log.error(error) })
-}, 60000 * 15);
-
-// Notification
-autoUpdater.on('update-available', (info) => {
-  const myNotification = new Notification({
-    title: "Nimby App",
-    body: `NimbyApp ${info.version} available.\nThis update will be install automatically`
-  });
-  myNotification.show();
-  log.info(`Update available : ${info.version}`)
-});
-// Install
-autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
-  setTimeout(() => { autoUpdater.quitAndInstall(); }, 8000);
-});
-autoUpdater.on('error', (error) => {
-  log.error(error)
-});
 
 /*
 ******************
@@ -69,7 +38,7 @@ let nimbyAutoMode = true;
 let autoInterval = null;
 let notifyHighUsage = false;
 
-function triggerAutoInterval(){
+function triggerAutoInterval() {
   autoInterval = setInterval(checkIfUsed, 60000);
 }
 
@@ -108,8 +77,29 @@ function updateNimbyStatusFromAPI() {
     })
 }
 
+function checkJob() {
+ return axios.get(`http://localhost:9005/blade/status`)
+  .then(function (response) {
+    jobs = response.data.pids;
+    if(jobs.length > 0) {
+      jobs.forEach(job => {
+        log.info(`The job number : ${job.jid}.${job.tid} is running`)
+      })
+    }
+    return jobs
+  })
+  .catch(function (error) {
+    log.error(error);
+  })
+}
+
 function checkIfUsed() {
   log.info("Check if the computer is used ...");
+  // Check if running job
+  checkJob().then((r) => {
+    console.log(r)
+  })
+
   // Always check if the pc is idle from 5 min
   if (electron.powerMonitor.getSystemIdleTime() < CONFIG.systemIdleTimeLimit){
     setNimbyOn().catch(()=>{})
@@ -117,8 +107,10 @@ function checkIfUsed() {
   // Check if we check the process (day) or only the resource (night)
   else if ((new Date().getHours() >= CONFIG.removeProcessCheckHours["start"])
       || (new Date().getHours() <= CONFIG.removeProcessCheckHours["end"])) {
+
+
     // Check CPU / RAM usage
-    if (checkRamUsage() && checkCPUUsage) {
+    if (checkRamUsage() && checkCPUUsage()) {
       log.info("Your pc is not used, set nimby off")
       setNimbyOff().catch(()=>{})
     }
@@ -307,7 +299,7 @@ function createPanel() {
 
   mainWindow.loadURL(
     //isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, "../build/index.html")}`
-    isDev ? `file://${path.join(__dirname, "index.html")}` : `file://${path.join(__dirname, "index.html")}`
+    isDev ? `file://${path.join(__dirname, "nimby.html")}` : `file://${path.join(__dirname, "nimby.html")}`
   );
   // Event
   mainWindow.on("closed", () => (mainWindow = null));
@@ -317,6 +309,9 @@ function createPanel() {
   mainWindow.on("blur", () => {
     showPanel(false)
   });
+
+  messageJob();
+  messageHighUsage();
 }
 
 function createTray() {
@@ -353,39 +348,12 @@ function showPanel(show = true) {
   }
 }
 
-function showMessage(link, frame=false) {
-  msgWindow = new BrowserWindow({
-    width: 500,
-    height: 400,
-    frame: frame,
-    alwaysOnTop: true,
-    resizable: frame,
-    maximizable: frame,
-    minimizable: frame,
-    webPreferences: { nodeIntegration: true }
-  });
-  msgWindow.loadURL(link);
-}
-
-app.on("ready", () => {
-  log.info("========= Hello =========")
-  if (!isDev) {
-    autoUpdater.checkForUpdates().catch((error) => { log.error(error) })
-  }
-  createTray()
-  createPanel()
-});
-
-app.setLoginItemSettings({
-  "openAtLogin": true,
-});
-
 app.on('quit', () => {
   try {
-    log.info("========= Good Bye ! =========")
     tray.destroy()
   } catch (e) { }
 });
+
 
 ipcMain.on('app_version', (event) => {
   event.sender.send('app_version', { version: app.getVersion() });
@@ -409,16 +377,4 @@ ipcMain.on('see_logs', () => {
   showMessage("file://C:/Users/Souls/AppData/Roaming/nimby-app/logs/main.log", true)
 })
 
-/*
-Message box
- */
-ipcMain.on('msg_quote', (event) => {
-  const randomQuote = QUOTES.highUsage[Math.floor(Math.random() * QUOTES.highUsage.length)];
-  event.sender.send('msg_quote', randomQuote);
-});
-
-ipcMain.on('msg_close', (event) => {
-  console.log("Close msg")
-  msgWindow.close()
-  msgWindow = null
-});
+module.exports = { createTray, createPanel };
