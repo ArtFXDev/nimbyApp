@@ -5,7 +5,7 @@
         Use src/message
 =================================
  */
-const { app, BrowserWindow, Tray, screen, ipcMain, Notification } = require("electron");
+const { app, BrowserWindow, Tray, screen, ipcMain } = require("electron");
 const os = require("os-utils");
 const path = require("path");
 const find = require('find-process');
@@ -13,11 +13,10 @@ const axios = require('axios');
 const electron = require('electron');
 const log = require('electron-log');
 
-const { messageJob, messageHighUsage, messageLogs } = require('../message/message')
+const { messageJob, closeMessage, messageLogs } = require('../message/message')
 
 let CONFIG = require('../config/config.json');
-let PASS = require('../config/pass.json')
-let QUOTES = require('../config/quotes.json')
+let PASS = require('../config/pass.json');
 
 const isDev = require('electron-is-dev');
 const iconDirPath = path.join(path.dirname(__dirname), 'images')
@@ -44,6 +43,7 @@ let nimbyOn = false;
 let nimbyAutoMode = true;
 let autoInterval = null;
 let notifyHighUsage = false;
+let runningJobs = [];
 
 function triggerAutoInterval() {
   autoInterval = setInterval(checkIfUsed, 60000);
@@ -66,86 +66,110 @@ function updateNimbyStatusFromAPI() {
 function checkJob() {
  return axios.get(`http://localhost:9005/blade/status`)
   .then(function (response) {
-    jobs = response.data.pids;
+    const jobs = [];
+    response.data.pids.forEach((data) => {
+      const taskId = data.jid + '.' + data.tid
+      jobs.push(taskId)
+    })
+    // remove finish jobs
+    runningJobs.forEach(key => {
+      console.log(`jobs : ${jobs}`)
+      console.log(`key  : ${key}`)
+      if(jobs.indexOf(key) === -1) {
+        const index = runningJobs.indexOf(key);
+        if (index > -1) {
+          runningJobs.splice(index, 1);
+          closeMessage(key)
+          log.info(`Job : ${key} as stop running`)
+        }
+      }
+    })
     if(jobs.length > 0) {
+      // Add job in cache and show message
       jobs.forEach(job => {
-        log.info(`The job number : ${job.jid}.${job.tid} is running`)
+        if (runningJobs.indexOf(job) === -1) {
+          runningJobs.push(job);
+          messageJob(job).then((response) => {
+            if (response === 'kill') {
+              log.info("You chose to kill the job and set nimby on")
+              setNimbyOn().catch(()=>{})
+            }
+          })
+        }
+        log.info(`The job number : ${job} is running`)
       })
     }
-    return jobs
+    return 0;
   })
   .catch(function (error) {
-    log.error(error);
+    log.error("Error getting running jobs : \n" + error);
+    return -1;
   })
 }
 
 function checkIfUsed() {
   log.info("Check if the computer is used ...");
   // Check if running job
-  checkJob().then((r) => {
-    console.log(r)
-  })
-
-  // Always check if the pc is idle from 5 min
-  if (electron.powerMonitor.getSystemIdleTime() < CONFIG.systemIdleTimeLimit){
-    setNimbyOn().catch(()=>{})
-  }
   // Check if we check the process (day) or only the resource (night)
-  else if ((new Date().getHours() >= CONFIG.removeProcessCheckHours["start"])
+  if ((new Date().getHours() >= CONFIG.removeProcessCheckHours["start"])
       || (new Date().getHours() <= CONFIG.removeProcessCheckHours["end"])) {
-
-
-    // Check CPU / RAM usage
-    if (checkRamUsage() && checkCPUUsage()) {
-      log.info("Your pc is not used, set nimby off")
-      setNimbyOff().catch(()=>{})
-    }
-    else {
-      if (!notifyHighUsage && (32 <= Math.round(os.totalmem() / Math.pow(1024, 1), 2))) {
-        notifyHighUsage = true
-        let message = "Your pc have high CPU or RAM usage !\nClose some useless software to be add in the render farm"
-        const randomQuote = QUOTES.highUsage[Math.floor(Math.random() * QUOTES.highUsage.length)];
-        const myNotification = new Notification({
-          title: "Nimby App",
-          body: message + '\n' + randomQuote
-        });
-        myNotification.on('click', (event, arg)=>{
-          console.log('Notification clicked')
-          showMessage(`file://${path.join(__dirname, "highUsageMessage.html")}`);
+    // NIGHT MODE
+    checkJob().then(() => {
+      // If a job is running, message will be show (checkJob)
+      if(runningJobs.length === 0) {
+        checkActionUsage()
+        // Check CPU / (RAM usage  checkRamUsage())
+        checkCPUUsage().then((response) => {
+          if (response) {
+            log.info("Your pc is not used, set nimby OFF")
+            setNimbyOff().catch(()=>{})
+          }
+          else {
+            // TODO else display message
+            log.info("Your have height cpu usage, let nimby ON")
+          }
         })
-        myNotification.show();
-        log.info("Your pc have high CPU or RAM usage, it will not switch to nimby off")
       }
-    }
+    });
   }
   else {
-    if (msgWindow) { msgWindow.close(); msgWindow = null; }
-    if (notifyHighUsage) { notifyHighUsage = false; }
+    // DAY MODE
+    checkActionUsage()
     checkForProcess()
+    checkJob()
   }
   updateTrayIcon()
 }
 
-function checkCPUUsage() {
-  os.cpuUsage((cpu) => {
-    log.info("CPU : " + (cpu * 100))
-    return ((cpu * 100) > 50)
+function checkActionUsage() {
+  if (electron.powerMonitor.getSystemIdleTime() < CONFIG.systemIdleTimeLimit){
+    setNimbyOn().catch(()=>{})
+  }
+}
+
+async function checkCPUUsage() {
+  return new Promise( (resolve) => {
+    os.cpuUsage((cpu) => {
+      log.info("CPU : " + Math.round(cpu * 100) + "%")
+      resolve(Math.round(cpu * 100) < 50)
+    });
   })
 }
 
-function checkRamUsage() {
+/*function checkRamUsage() {
   let maxRam = Math.round(os.totalmem() / Math.pow(1024, 1))
   console.log('RAM : ' + maxRam)
   Object.keys(CONFIG.ramUsageLimits).forEach(rule => {
     if (maxRam > rule.split('-')[0] && maxRam <= rule.split('-')[1]) {
       let freeMemory = Math.round(os.freemem() / Math.pow(1024, 1))
+      log.info("RAM FREE : " + freeMemory)
       if (freeMemory < CONFIG.ramUsageLimits[rule]) {
         return true
       }
     }
   })
   return false
-}
+}*/
 
 function checkForProcess() {
   log.info("Check for Processes ...");
@@ -201,7 +225,7 @@ function updateTrayIcon() {
   // Update Tray icon
   if (!tray) return;
 
-  const _img = nimbyOn ? path.join(iconDirPath, "artfx_green.png") : path.join(iconDirPath, "artfx_red.png")
+  const _img = nimbyOn ? path.join(iconDirPath, "nimby_green.png") : path.join(iconDirPath, "nimby_red.png")
   tray.setImage(_img)
 
   // update from web app
@@ -300,7 +324,7 @@ function createPanel() {
 
 function createTray() {
   if (tray != null) return false;
-  tray = new Tray(path.join(iconDirPath, "artfx.png"))
+  tray = new Tray(path.join(iconDirPath, "nimby.png"))
 
   tray.setToolTip("Nimby" + (isDev ? "(Dev)" : ""))
   tray.on("click", () => toggleTray())
@@ -384,9 +408,7 @@ ipcMain.on('get_nimby_status', (event) => {
 })
 
 ipcMain.on('see_logs', () => {
-  //
-  // C:/Users/etudiant/AppData/Roaming/nimby-app/logs/main.log
-  messageLogs("file://C:/Users/Souls/Desktop/test.log")
+  messageLogs("C:/Users/etudiant/AppData/Roaming/nimby-app/logs/main.log")
 })
 
 module.exports = { run };

@@ -33,7 +33,7 @@
         "metashape",
         "wstart"
     ],
-    "autoResetNimbyModeHours": 18,
+    "autoResetNimbyModeHours": 19,
     "removeProcessCheckHours": {
         "start": 19,
         "end": 8

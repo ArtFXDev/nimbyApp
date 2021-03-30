@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<head>
+  <title>Nimby App</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body>
+  <img src="../images/artfx/default.jpg" alt="ArtFx logo" class="logo"/>
+  <div class="center">
+    <h1 class="title">Job Running</h1>
+    <p>A job (<span id="taskId">0</span>) is currently running on your computer.</p>
+    <p>- To kill the job and block the farm click 'Kill Job'</p>
+    <p>- To keep the job running and close this window click 'close'</p>
+    <p>Pass in manuel mode if you are regularly AFK</p>
+    <p><i id="quote"></i></p>
+    <button id="btn_close" class="button">Close</button>
+    <button id="btn_kill" class="button default">Kill Job</button>
+  </div>
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    const btnClose = document.getElementById('btn_close');
+    const btnKill = document.getElementById('btn_kill');
+    const taskIdSpan = document.getElementById('taskId');
+    const quote = document.getElementById('quote');
+
+    btnClose.addEventListener('click', () => {
+      ipcRenderer.send('msg_close', taskIdSpan.innerText);
+    });
+    btnKill.addEventListener('click', () => {
+      ipcRenderer.send('msg_killJob', taskIdSpan.innerText);
+    });
+
+    ipcRenderer.send('taskId');
+    ipcRenderer.on('taskId', (event, taskId) => {
+      ipcRenderer.removeAllListeners('taskId');
+      taskIdSpan.innerText = taskId;
+    });
+    ipcRenderer.send('msg_quote');
+    ipcRenderer.on('msg_quote', (event, msg) => {
+      ipcRenderer.removeAllListeners('msg_quote');
+      quote.innerText = msg;
+    });
+  </script>
+</body>

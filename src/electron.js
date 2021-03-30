@@ -1,6 +1,6 @@
 /*
 =====================================================
-    This is my main process, here i call my app
+    This is my main process, here I call my app
     and I check updates
 =====================================================
  */
@@ -38,7 +38,7 @@ autoUpdater.on('update-available', (info) => {
   log.info(`Update available : ${info.version}`)
 });
 // Install
-autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+autoUpdater.on('update-downloaded', () => {
   setTimeout(() => { autoUpdater.quitAndInstall(); }, 8000);
 });
 autoUpdater.on('error', (error) => {
@@ -54,7 +54,7 @@ app.on("ready", () => {
   if (!isDev) {
     autoUpdater.checkForUpdates().catch((error) => { log.error(error) })
   }
-  const response = runNimby();
+  runNimby();
 });
 
 function runNimby() {
@@ -70,6 +70,7 @@ function runNimby() {
       }
     })
     .catch(function (error) {
+      console.log(error)
       log.error("Tractor is not running !!!!!!!!!")
       tryTractorLaunch().then((result) => {
         if(result === 0) {

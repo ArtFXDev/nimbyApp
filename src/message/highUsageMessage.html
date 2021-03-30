@@ -12,7 +12,7 @@
     <p>We detect a high use of CPU or RAM usage on your computer.</p>
     <p>To Help render farm, close useless applications to pass in the render farm or set your nimby in manual and off mode</p>
     <p><i id="quote"></i></p>
-    <button id="btn_close" class="buttonOk">Ok</button>
+    <button id="btn_close" class="button">Ok</button>
   </div>
   <script>
     const { ipcRenderer } = require('electron');
@@ -21,12 +21,11 @@
     const quote = document.getElementById('quote');
 
     btnClose.addEventListener('click', (event) => {
-        console.log("close")
+      console.log("close")
       ipcRenderer.send('msg_close');
     });
     ipcRenderer.send('msg_quote');
     ipcRenderer.on('msg_quote', (event, msg) => {
-        console.log("msg_quote")
       ipcRenderer.removeAllListeners('msg_quote');
       quote.innerText = msg;
     });
