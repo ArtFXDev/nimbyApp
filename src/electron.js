@@ -13,6 +13,7 @@ const log = require('electron-log');
 const isDev = require('electron-is-dev');
 
 const nimby = require('./nimby/nimby');
+const miniGame = require('./minigame/miniGame');
 let CONFIG = require('./config/config.json');
 
 /*
@@ -55,6 +56,7 @@ app.on("ready", () => {
     autoUpdater.checkForUpdates().catch((error) => { log.error(error) })
   }
   runNimby();
+  miniGame.run();
 });
 
 function runNimby() {
