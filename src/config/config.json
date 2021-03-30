@@ -1,4 +1,5 @@
 {
+    "tractorPath": "C:/Program Files/Pixar/Tractor-2.3/bin/TractorBladeService.exe",
     "softwares": [
         "3dsmax",
         "Adobe Premiere Pro",
@@ -32,7 +33,7 @@
         "metashape",
         "wstart"
     ],
-    "autoResetNimbyModeHours": 18,
+    "autoResetNimbyModeHours": 19,
     "removeProcessCheckHours": {
         "start": 19,
         "end": 8

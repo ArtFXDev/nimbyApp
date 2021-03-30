@@ -1,9 +1,23 @@
+@font-face {
+    font-family: CooperHewitt;
+    src: url("../font/CooperHewitt-Medium.otf") format("opentype");
+}
+
+@font-face {
+    font-family: Klavika;
+    src: url("../font/Klavika-Medium.otf") format("opentype");
+}
+
 body {
     box-sizing: border-box;
     margin: 0;
     padding: 20px;
-    font-family: sans-serif;
-    background-color: #eaeaea;
+    font-family: CooperHewitt, "Times New Roman";
+    background-color: white;
+}
+
+.title {
+    font-family: Klavika;
 }
 
 #version {
@@ -145,7 +159,15 @@ input:checked + .slider:before {
     cursor: pointer;
 }
 
-.buttonOk {
+.logo {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100px;
+    object-fit: cover;
+}
+
+.button {
     background-color: transparent;
     color: black;
     border: 1px solid black;
@@ -156,10 +178,10 @@ input:checked + .slider:before {
     padding-right: 16px;
     outline: none;
     cursor: pointer;
+    font-family: CooperHewitt;
 }
 
-.checked {
-    background-color: rgba(133, 231, 142, 0.5);
+.default {
+    background-color: rgba(232, 66, 59, 0.4);
 }
-
 

@@ -1,10 +1,10 @@
 {
   "name": "nimby-app",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": "ArtFX TD Dev",
   "license": "MIT",
   "description": "Nimby app use in ArtFx. Use tractor nimby",
-  "main": "./public/electron.js",
+  "main": "./src/electron.js",
   "homepage": "./",
   "dependencies": {
     "axios": "^0.21.1",
@@ -41,9 +41,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/ArtFXDev/nimbyApp.git"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
   },
   "browserslist": [
     ">0.2%",
