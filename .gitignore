@@ -29,9 +29,4 @@ yarn.lock
 electron-builder.yml
 
 # Password
-/src/config/pass.json
-
-# Font
-/src/font/
-!/src/font/CooperHewitt-Medium.otf
-!/src/font/Klavika-Medium.otf
+src/config/pass.json
