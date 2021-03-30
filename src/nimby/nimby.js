@@ -16,7 +16,6 @@ const log = require('electron-log');
 const { messageJob, closeMessage, messageLogs } = require('../message/message')
 
 let CONFIG = require('../config/config.json');
-let PASS = require('../config/pass.json');
 
 const isDev = require('electron-is-dev');
 const iconDirPath = path.join(path.dirname(__dirname), 'images')
@@ -197,30 +196,6 @@ function checkForProcess() {
   });
 }
 
-function checkForNoFreeSlot() {
-  log.info("Check for No Free Slot ...");
-  // Check if we are in no free slots (1)
-  axios.get(`http://tractor/Tractor/monitor?q=bdetails&b=${hnm}`)
-    .then(function (response) {
-      if (response.data.note === "no free slots (1)" && response.data.as === 1) {
-        // For each process in config kill it
-        CONFIG.no_free_slot_process.forEach(processToKill => {
-          log.info(`Trying to kill : ${processToKill}`)
-          axios.post(`http://localhost:80/kill`, {"name": processToKill, "pass": PASS.pass})
-            .then((response) => {
-              log.info(response.data);
-            })
-            .catch((error) => {
-              log.info(error);
-            })
-        })
-      }
-    })
-    .catch(function (error) {
-      log.info(error);
-    });
-}
-
 function updateTrayIcon() {
   // Update Tray icon
   if (!tray) return;
@@ -368,10 +343,6 @@ function run() {
       setInterval(() => {
         checkForAutoResetNimbyMode();
       }, 60000 * 60); // check all hours
-      // Check for no free slot
-      setInterval(() => {
-        checkForNoFreeSlot();
-      }, 60000 * 5)
 
       createTray()
       createPanel()
