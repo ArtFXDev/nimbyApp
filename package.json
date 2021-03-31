@@ -12,6 +12,7 @@
     "electron-log": "^4.3.2",
     "electron-updater": "^4.3.5",
     "find-process": "^1.4.4",
+    "node-schedule": "^2.0.0",
     "os-utils": "0.0.14"
   },
   "scripts": {

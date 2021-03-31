@@ -12,6 +12,7 @@ const find = require('find-process');
 const axios = require('axios');
 const electron = require('electron');
 const log = require('electron-log');
+const minigame = require('../minigame/miniGame')
 
 const { messageJob, closeMessage, messageLogs } = require('../message/message')
 
@@ -371,6 +372,12 @@ function run() {
     })
 }
 
+function nimbyEvent(event) {
+  if (event) {
+    mainWindow.webContents.send("event", event)
+  }
+}
+
 app.on('quit', () => {
   try {
     tray.destroy()
@@ -400,4 +407,11 @@ ipcMain.on('see_logs', () => {
   messageLogs("C:/Users/etudiant/AppData/Roaming/nimby-app/logs/main.log")
 })
 
-module.exports = { run };
+ipcMain.on('event_toggle', (e, isEvent) => {
+  console.log("isEvent : " + isEvent)
+  if (!isEvent) {
+    minigame.stop();
+  }
+})
+
+module.exports = { run, nimbyEvent };

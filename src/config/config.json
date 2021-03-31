@@ -52,5 +52,11 @@
         "hick",
         "mayabatch",
         "mantra"
-    ]
+    ],
+    "minigame": {
+        "31/03/2021": "avril",
+        "01/04": "avril",
+        "6/04/2021": "paques",
+        "25/12": "noel"
+    }
 }
