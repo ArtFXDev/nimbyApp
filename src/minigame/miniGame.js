@@ -17,22 +17,28 @@ class Item {
       minimizable: false,
       skipTaskbar: true,
     });
-    this.width = width;
-    this.height = height;
+    this.itemWin.loadURL(html);
+
     this.x = this.itemWin.getPosition()[0];
     this.y = this.itemWin.getPosition()[1];
+
+    this.width = width;
+    this.height = height;
+
     this.isDrag = false;
-    this.itemWin.loadURL(html);
+
     setInterval(() => {
       this.move();
     }, 50)
 
-    this.itemWin.hookWindowMessage(Number.parseInt('0x0231'), (wParam,lParam)=>{
+    this.itemWin.hookWindowMessage(Number.parseInt('0x0231'), (wParam,lParam) => {
       console.log("moving");
       this.isDrag = true;
       bag.show()
+      this.itemWin.webContents.send('message', 'Hello second window!');
     });
-    this.itemWin.hookWindowMessage(Number.parseInt('0x0232'),(wParam,lParam)=>{
+
+    this.itemWin.hookWindowMessage(Number.parseInt('0x0232'),(wParam,lParam) => {
       console.log("finish move");
       this.x = this.itemWin.getPosition()[0];
       this.y = this.itemWin.getPosition()[1];
@@ -43,67 +49,66 @@ class Item {
 
   move() {
     if(this.isDrag) return;
+
     const cursorPos = screen.getCursorScreenPoint();
+
     let diffX = (cursorPos.x - this.width / 2) - this.x;
     let diffY = (cursorPos.y - this.height / 2) - this.y;
+
     const length = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
+
     if (length > 600) {
       this.x += Math.round((diffX / length) * 5);
       this.y += Math.round((diffY / length) * 5);
-      this.itemWin.setPosition(this.x, this.y)
     }
     else if (length > 500) {
       this.x -= Math.round((diffX / length /2) * 5);
       this.y -= Math.round((diffY / length /2) * 5);
-      this.itemWin.setPosition(this.x, this.y)
     }
     else if (length > 10) {
       this.x -= Math.round((diffX / length) * 10);
       this.y -= Math.round((diffY / length) * 10);
-      this.itemWin.setPosition(this.x, this.y)
     }
     else {
       this.x -= Math.round((diffX / length) * 5);
       this.y -= Math.round((diffY / length) * 5);
-      console.log(this.x)
-      this.itemWin.setPosition(this.x, this.y)
     }
+
+    this.itemWin.setPosition(this.x, this.y)
   }
 }
 
 class ItemWalking extends Item {
-    constructor(bag, x, y) {
-      const { width, height } = screen.getPrimaryDisplay().workAreaSize
-      super(bag, 0, height - 100, 100, 100, `file://${path.join(__dirname, "fish_walking.html")}`);
+  static w = 400;
+  static h = 400;
+
+  constructor(bag, x, y) {
+    let { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    //height *= 0.99;
+
+    super(bag, 0, height - ItemWalking.h, ItemWalking.w, ItemWalking.h, `file://${path.join(__dirname, "fish_walking.html")}`);
+
+    this.speed = 30;
+
+    this.widthScreen = width;
+    this.heightScreen = height;
+  }
+
+  move() {
+    if(this.isDrag) return;
+
+    // On est là
+    // Ok so, je fait quoi ? le score ?
+    // On termine ce qu'on doit faire et on part
+    // ok, juste push (quand t'a fini :))
+
+    if (this.x + ItemWalking.w < this.widthScreen &&
+      this.y === this.heightScreen - ItemWalking.h) {
+      this.x += this.speed;
     }
 
-    move() {
-      if(this.isDrag) return;
-      const cursorPos = screen.getCursorScreenPoint();
-      let diffX = (cursorPos.x - this.width / 2) - this.x;
-      let diffY = (cursorPos.y - this.height / 2) - this.y;
-      const length = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
-      if (length > 600) {
-        this.x += Math.round((diffX / length) * 5);
-        this.y += Math.round((diffY / length) * 5);
-        this.itemWin.setPosition(this.x, this.y)
-      }
-      else if (length > 500) {
-        this.x -= Math.round((diffX / length /2) * 5);
-        this.y -= Math.round((diffY / length /2) * 5);
-        this.itemWin.setPosition(this.x, this.y)
-      }
-      else if (length > 10) {
-        this.x -= Math.round((diffX / length) * 10);
-        this.y -= Math.round((diffY / length) * 10);
-        this.itemWin.setPosition(this.x, this.y)
-      }
-      else {
-        this.x -= Math.round((diffX / length) * 5);
-        this.y -= Math.round((diffY / length) * 5);
-        this.itemWin.setPosition(this.x, this.y)
-      }
-    }
+    this.itemWin.setPosition(this.x, this.y)
+  }
 }
 
 class Bag {
