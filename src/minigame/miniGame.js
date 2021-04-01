@@ -71,6 +71,13 @@ class Item {
     if(this.isDrag) return;
 
     const cursorPos = screen.getCursorScreenPoint();
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+    if (this.x < 0 - this.width || this.x > width
+      || this.y < 0 - this.height || this.y < height) {
+      this.itemWin.close();
+      return;
+    }
 
     let diffX = (cursorPos.x - this.width / 2) - this.x;
     let diffY = (cursorPos.y - this.height / 2) - this.y;
@@ -108,6 +115,7 @@ class ItemWalking extends Item {
     super(bag, 0, height - ItemWalking.h, ItemWalking.w, ItemWalking.h * 1.1, `file://${path.join(__dirname, "fish_walking.html")}`);
 
     this.speed = 30;
+    this.timout = 2 * 60000;
 
     this.widthScreen = width;
     this.heightScreen = height;
