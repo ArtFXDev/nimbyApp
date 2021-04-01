@@ -44,6 +44,7 @@ let nimbyAutoMode = true;
 let autoInterval = null;
 let notifyHighUsage = false;
 let runningJobs = [];
+let isEvent = false;
 
 function triggerAutoInterval() {
   autoInterval = setInterval(checkIfUsed, 60000);
@@ -375,6 +376,7 @@ function run() {
 function nimbyEvent(event) {
   if (event) {
     mainWindow.webContents.send("event", event)
+    isEvent = event
   }
 }
 
@@ -413,5 +415,8 @@ ipcMain.on('event_toggle', (e, isEvent) => {
     minigame.stop();
   }
 })
+ipcMain.on('isEvent', (event) => {
+  event.sender.send('event', { event: isEvent });
+});
 
 module.exports = { run, nimbyEvent };

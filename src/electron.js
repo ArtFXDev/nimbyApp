@@ -61,15 +61,19 @@ app.on("ready", () => {
     const dateSplit = item[0].split("/")
     const year = dateSplit[2] ? dateSplit[2] : new Date().getFullYear()
 
-    const date = new Date(year, dateSplit[1] - 1, dateSplit[0], 10, 0, 0);
+    let date = new Date(year, dateSplit[1] - 1, dateSplit[0], 10, 0, 0);
+    if (isDev) {
+      const cur_date = new Date()
+      date = new Date(cur_date.getFullYear(), cur_date.getMonth(), cur_date.getDate(), cur_date.getHours(),  cur_date.getMinutes() + 1, 0, 0);
+    }
     const start = schedule.scheduleJob(date, function(){
-      log.info('The world is going to end today.');
+      log.info('Event start.');
       miniGame.run();
       nimby.nimbyEvent(item[1])
     });
     const date_stop = new Date(year, dateSplit[1] - 1, dateSplit[0], 17, 0, 0);
     const stop = schedule.scheduleJob(date_stop, function(){
-      log.info('The world is going to end today.');
+      log.info('Event end.');
       miniGame.stop();
       nimby.nimbyEvent(item[1])
     });

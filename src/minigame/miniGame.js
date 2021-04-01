@@ -75,7 +75,9 @@ class Item {
 
     if (this.x < 0 - this.width || this.x > width
       || this.y < 0 - this.height || this.y < height) {
-      this.itemWin.close();
+      if (this.itemWin){
+        this.itemWin.close();
+      }
       return;
     }
 
@@ -203,7 +205,7 @@ class Game {
     const bag = new Bag();
     const items = [];
     (function loop() {
-      const rand = randInt(3, 5) * 60000;
+      const rand = randInt(3, 5) * 6000;
       setTimeout(function() {
         if (Bag.maxItems > items.length) {
           const item = new Item(bag, randInt(0.1 * width , 0.9 * width), randInt(0.1 * height, 0.9 * height))
@@ -213,7 +215,7 @@ class Game {
       }, rand);
     }());
     (function loopWalk() {
-      const rand = randInt(5, 10) * 60000;
+      const rand = randInt(5, 10) * 6000;
       setTimeout(function() {
         if (Bag.maxItems > items.length) {
           const item = new ItemWalking(bag, randInt(0.1 * width , 0.9 * width), randInt(0.1 * height, 0.9 * height))
@@ -230,31 +232,17 @@ function SpawnItem(items, item) {
 }
 
 let game = null
-let isTime = false
-
-setInterval(() => {
-  if (new Date().getHours() >= 1 && new Date().getHours() <= 17) {
-    isTime = true
-    run()
-  }
-  else {
-    isTime = false
-  }
-}, 5 * 60000)
 
 function run() {
-  if (isTime) {
-    if (game) {
-      Bag.maxItems = 5
-    }
-    else {
-      game = new Game();
-    }
+  if (game) {
+    Bag.maxItems = 5
+  }
+  else {
+    game = new Game();
   }
 }
 
 function stop() {
-  game = null
   Bag.maxItems = 0
 }
 

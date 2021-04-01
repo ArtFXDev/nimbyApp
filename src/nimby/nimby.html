@@ -52,6 +52,7 @@
 
   <script>
     const { ipcRenderer } = require('electron');
+    const path = require("path");
     const version = document.getElementById('version');
     const nimbyStatusElement = document.getElementById('nimbyStatus');
     const nimbyModStatusElement = document.getElementById('nimbyModStatus');
@@ -60,8 +61,9 @@
 
     const btnModeSwitch = document.getElementById('btn_mode_switch');
     const btnNimbySwitch = document.getElementById('btn_nimby_switch');
-    const btnEventSwitch = document.getElementById('btn_event_switch');
     const nimbySwitchDiv = document.getElementById('nimby_switch')
+    const btnEventSwitch = document.getElementById('btn_event_switch');
+    const eventSwitchDiv = document.getElementById('event_switch')
 
     // Get default value
     ipcRenderer.send('app_version');
@@ -77,7 +79,7 @@
     });
 
     btnEventSwitch.addEventListener('click', (event) => {
-      ipcRenderer.send('event_toggle', !btnEventSwitch.checked);
+      ipcRenderer.send('event_toggle', btnEventSwitch.checked);
     })
 
     seeLogs.addEventListener('click', () => {
@@ -103,11 +105,11 @@
       }
     });
 
+    ipcRenderer.send('isEvent');
     ipcRenderer.on('event', (e, event) => {
-      document.body.style.backgroundImage = `../images/minigame/${event}/nimby.gif`
+      document.body.style.backgroundImage = `url(../images/minigame/avril/nimby.gif)`
+      eventSwitchDiv.style.display = "flex"
     })
-
-
 
   </script>
 </body>
