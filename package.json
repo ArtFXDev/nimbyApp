@@ -1,6 +1,6 @@
 {
   "name": "nimby-app",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "author": "ArtFX TD Dev",
   "license": "MIT",
   "description": "Nimby app use in ArtFx. Use tractor nimby",
@@ -12,6 +12,7 @@
     "electron-log": "^4.3.2",
     "electron-updater": "^4.3.5",
     "find-process": "^1.4.4",
+    "node-schedule": "^2.0.0",
     "os-utils": "0.0.14"
   },
   "scripts": {

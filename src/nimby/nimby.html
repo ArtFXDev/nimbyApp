@@ -30,6 +30,14 @@
       </label>
       <span class="switchSpan">Turn ON</span>
     </div>
+    <div id="event_switch" class="main_switch" style="display: none;margin-top: 20px;">
+      <span class="switchSpan">Fish OFF</span>
+      <label class="switch">
+        <input id="btn_event_switch" type="checkbox" checked>
+        <span class="slider"></span>
+      </label>
+      <span class="switchSpan">Fish ON</span>
+    </div>
   </div>
   <div id="legend">
     <div class="legend-line"><span class="dotGreen"></span><span class="legend-text">Nimby is ON : You are protected from renderfarm jobs</span></div>
@@ -44,6 +52,7 @@
 
   <script>
     const { ipcRenderer } = require('electron');
+    const path = require("path");
     const version = document.getElementById('version');
     const nimbyStatusElement = document.getElementById('nimbyStatus');
     const nimbyModStatusElement = document.getElementById('nimbyModStatus');
@@ -53,6 +62,8 @@
     const btnModeSwitch = document.getElementById('btn_mode_switch');
     const btnNimbySwitch = document.getElementById('btn_nimby_switch');
     const nimbySwitchDiv = document.getElementById('nimby_switch')
+    const btnEventSwitch = document.getElementById('btn_event_switch');
+    const eventSwitchDiv = document.getElementById('event_switch')
 
     // Get default value
     ipcRenderer.send('app_version');
@@ -66,6 +77,10 @@
     btnModeSwitch.addEventListener('click', (event) => {
       ipcRenderer.send('on_switch_nimby_mod', !btnModeSwitch.checked);
     });
+
+    btnEventSwitch.addEventListener('click', (event) => {
+      ipcRenderer.send('event_toggle', btnEventSwitch.checked);
+    })
 
     seeLogs.addEventListener('click', () => {
         ipcRenderer.send('see_logs')
@@ -89,6 +104,12 @@
         nimbySwitchDiv.style.display = "none";
       }
     });
+
+    ipcRenderer.send('isEvent');
+    ipcRenderer.on('event', (e, event) => {
+      document.body.style.backgroundImage = `url(../images/minigame/avril/nimby.gif)`
+      eventSwitchDiv.style.display = "flex"
+    })
 
   </script>
 </body>

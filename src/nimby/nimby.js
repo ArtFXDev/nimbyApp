@@ -12,6 +12,7 @@ const find = require('find-process');
 const axios = require('axios');
 const electron = require('electron');
 const log = require('electron-log');
+const minigame = require('../minigame/miniGame')
 
 const { messageJob, closeMessage, messageLogs } = require('../message/message')
 
@@ -43,6 +44,7 @@ let nimbyAutoMode = true;
 let autoInterval = null;
 let notifyHighUsage = false;
 let runningJobs = [];
+let isEvent = false;
 
 function triggerAutoInterval() {
   autoInterval = setInterval(checkIfUsed, 60000);
@@ -371,6 +373,13 @@ function run() {
     })
 }
 
+function nimbyEvent(event) {
+  if (event) {
+    mainWindow.webContents.send("event", event)
+    isEvent = event
+  }
+}
+
 app.on('quit', () => {
   try {
     tray.destroy()
@@ -400,4 +409,14 @@ ipcMain.on('see_logs', () => {
   messageLogs("C:/Users/etudiant/AppData/Roaming/nimby-app/logs/main.log")
 })
 
-module.exports = { run };
+ipcMain.on('event_toggle', (e, isEvent) => {
+  console.log("isEvent : " + isEvent)
+  if (!isEvent) {
+    minigame.stop();
+  }
+})
+ipcMain.on('isEvent', (event) => {
+  event.sender.send('event', { event: isEvent });
+});
+
+module.exports = { run, nimbyEvent };
