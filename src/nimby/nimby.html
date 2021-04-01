@@ -107,8 +107,14 @@
 
     ipcRenderer.send('isEvent');
     ipcRenderer.on('event', (e, event) => {
-      document.body.style.backgroundImage = `url(../images/minigame/avril/nimby.gif)`
-      eventSwitchDiv.style.display = "flex"
+      if (event !== false) {
+        document.body.style.backgroundImage = `url(../images/minigame/avril/nimby.gif)`
+        eventSwitchDiv.style.display = "flex"
+      }
+      else {
+        document.body.style.backgroundImage = ""
+        eventSwitchDiv.style.display = "none"
+      }
     })
 
   </script>

@@ -374,10 +374,8 @@ function run() {
 }
 
 function nimbyEvent(event) {
-  if (event) {
-    mainWindow.webContents.send("event", event)
-    isEvent = event
-  }
+  mainWindow.webContents.send("event", event)
+  isEvent = event
 }
 
 app.on('quit', () => {
@@ -416,7 +414,7 @@ ipcMain.on('event_toggle', (e, isEvent) => {
   }
 })
 ipcMain.on('isEvent', (event) => {
-  event.sender.send('event', { event: isEvent });
+  event.sender.send('event', isEvent);
 });
 
 module.exports = { run, nimbyEvent };

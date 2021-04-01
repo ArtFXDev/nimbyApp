@@ -24,7 +24,6 @@ class Item {
     this.x = this.itemWin.getPosition()[0];
     this.y = this.itemWin.getPosition()[1];
     this.width = width;
-
     this.height = height;
     this.isDrag = false;
 
@@ -50,14 +49,14 @@ class Item {
       if (this.x + this.width / 2 >= bag.bagWin.getPosition()[0] && this.y + this.height / 2 >= bag.bagWin.getPosition()[1]
       && this.x + this.width / 2 <= bag.bagWin.getPosition()[0] + bag.width && this.y + this.height / 2 <= bag.bagWin.getPosition()[1] + bag.height) {
         console.log("CHAMPION")
-        this.itemWin.webContents.send('sound', 'bag');
         axios.post(`http://192.168.2.123:5000/game/score/${os.hostname()}?points=${1}`)
           .then((e) => {
-            console.log(e)
+            // console.log(e)
           })
           .catch((err) => {
-            console.log(err)
+            // console.log(err)
           })
+        this.close()
       }
       else {
         this.itemWin.webContents.send('sound-stop')
@@ -65,6 +64,14 @@ class Item {
       this.isDrag = false;
       bag.hide()
     });
+
+
+  }
+
+  close() {
+    this.itemWin.hide()
+    items[items.indexOf(this)] = null
+    items.splice(items.indexOf(this), 1)
   }
 
   move() {
@@ -154,6 +161,7 @@ class ItemWalking extends Item {
 
 class Bag {
   catchItems = [];
+  static maxItems = 5;
 
   constructor() {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize
@@ -196,20 +204,20 @@ function randInt(a, b) {
   return Math.floor(Math.random() * (b - a)) + a
 }
 
+const items = []
+
 class Game {
   static maxItems = 5;
 
   constructor() {
-    this.bag = new Bag()
     const { width, height } = screen.getPrimaryDisplay().workAreaSize
     const bag = new Bag();
-    const items = [];
     (function loop() {
       const rand = randInt(3, 5) * 60000;
       setTimeout(function() {
         if (Bag.maxItems > items.length) {
           const item = new Item(bag, randInt(0.1 * width , 0.9 * width), randInt(0.1 * height, 0.9 * height))
-          SpawnItem(items, bag, item);
+          SpawnItem(item);
           loop();
         }
       }, rand);
@@ -217,9 +225,10 @@ class Game {
     (function loopWalk() {
       const rand = randInt(5, 10) * 60000;
       setTimeout(function() {
+        console.log("running time")
         if (Bag.maxItems > items.length) {
           const item = new ItemWalking(bag, randInt(0.1 * width , 0.9 * width), randInt(0.1 * height, 0.9 * height))
-          SpawnItem(items, bag, item);
+          SpawnItem(item);
           loopWalk();
         }
       }, rand);
@@ -227,7 +236,7 @@ class Game {
   }
 }
 
-function SpawnItem(items, item) {
+function SpawnItem(item) {
   items.push(item);
 }
 
@@ -244,6 +253,11 @@ function run() {
 
 function stop() {
   Bag.maxItems = 0
+  items.forEach((item, index) => {
+    if(item) {
+      item.close()
+    }
+  })
 }
 
 module.exports = { run, stop }
