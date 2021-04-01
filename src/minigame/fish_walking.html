@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Catch me if you can</title>
+  <link rel="stylesheet" href="../css/miniGame.css">
+</head>
+<body>
+  <img id="fish" src="../images/minigame/avril/walking.gif" alt="poisson" />
+</body>
+<script>
+  const { ipcRenderer } = require('electron');
+  const fish = document.getElementById("fish");
+  fish.style.filter = `drop-shadow(0px 0px 15px green) hue-rotate(${Math.floor(Math.random() * 360)}deg)`
+
+  let audio = null;
+
+  ipcRenderer.on('sound', (e, type) => {
+    console.log("soud : " + type)
+    if (type === "drag") {
+      audio = new Audio('../images/minigame/avril/FishSound/walking_fish_drag.mp3');
+    }
+    if (type === "spawn") {
+      audio = new Audio('../images/minigame/avril/FishSound/walking_fish_spawn.mp3');
+      console.log("play spawn")
+    }
+    if (type === "bag") {
+      audio = new Audio('../images/minigame/avril/FishSound/walking_fish_bag.mp3');
+    }
+    audio.play();
+  })
+
+  ipcRenderer.on('sound-stop', () => {
+    if (audio) {
+      audio.pause();
+    }
+  })
+
+  ipcRenderer.on('rotation', (e, degree) => {
+    fish.style.transform = `rotate(${degree}deg)`
+  })
+
+
+
+</script>
+</html>
