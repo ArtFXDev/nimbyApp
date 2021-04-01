@@ -73,13 +73,13 @@ class Item {
     const cursorPos = screen.getCursorScreenPoint();
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-    if (this.x < 0 - this.width || this.x > width
+    /*if (this.x < 0 - this.width || this.x > width
       || this.y < 0 - this.height || this.y < height) {
       if (this.itemWin){
         this.itemWin.close();
       }
       return;
-    }
+    }*/
 
     let diffX = (cursorPos.x - this.width / 2) - this.x;
     let diffY = (cursorPos.y - this.height / 2) - this.y;
@@ -205,7 +205,7 @@ class Game {
     const bag = new Bag();
     const items = [];
     (function loop() {
-      const rand = randInt(3, 5) * 6000;
+      const rand = randInt(3, 5) * 60000;
       setTimeout(function() {
         if (Bag.maxItems > items.length) {
           const item = new Item(bag, randInt(0.1 * width , 0.9 * width), randInt(0.1 * height, 0.9 * height))
@@ -215,7 +215,7 @@ class Game {
       }, rand);
     }());
     (function loopWalk() {
-      const rand = randInt(5, 10) * 6000;
+      const rand = randInt(5, 10) * 60000;
       setTimeout(function() {
         if (Bag.maxItems > items.length) {
           const item = new ItemWalking(bag, randInt(0.1 * width , 0.9 * width), randInt(0.1 * height, 0.9 * height))
