@@ -109,51 +109,55 @@ function checkJob() {
 function checkIfUsed() {
   log.info("Check if the computer is used ...");
   // Check if running job
-  checkJob().then(() => {
-    // If a job is running, message will be show (checkJob)
-    if(runningJobs.length === 0) {
-      // Check if we check the process (day) or only the resource (night)
-      if ((new Date().getHours() >= CONFIG.removeProcessCheckHours["start"])
-          || (new Date().getHours() <= CONFIG.removeProcessCheckHours["end"])) {
-        // NIGHT MODE
-        checkActionUsage()
-        if (electron.powerMonitor.getSystemIdleTime() < CONFIG.systemIdleTimeLimit) {
-          setNimbyOn().catch(() => {})
-        }
-        else {
+  checkJob()
+    .then(() => {
+      // If a job is running, message will be show (checkJob)
+      if(runningJobs.length === 0) {
+        // Check if we check the process (day) or only the resource (night)
+        if ((new Date().getHours() >= CONFIG.removeProcessCheckHours["start"])
+            || (new Date().getHours() <= CONFIG.removeProcessCheckHours["end"])) {
+          // NIGHT MODE
+          checkActionUsage()
+          if (electron.powerMonitor.getSystemIdleTime() < CONFIG.systemIdleTimeLimit) {
+            setNimbyOn().catch(() => {})
+          }
+          else {
+            checkCPUUsage().then((response) => {
+              if (response) {
+                log.info("Your pc is not used, set nimby OFF")
+                setNimbyOff().catch(() => {})
+              } else {
+                // TODO else display message
+                log.info("Your have height cpu usage, let nimby ON")
+              }
+            })
+          }
+          /*// Check CPU / (RAM usage  checkRamUsage())
           checkCPUUsage().then((response) => {
             if (response) {
               log.info("Your pc is not used, set nimby OFF")
-              setNimbyOff().catch(() => {})
-            } else {
+              setNimbyOff().catch(()=>{})
+            }
+            else {
               // TODO else display message
               log.info("Your have height cpu usage, let nimby ON")
             }
-          })
-        }
-        /*// Check CPU / (RAM usage  checkRamUsage())
-        checkCPUUsage().then((response) => {
-          if (response) {
-            log.info("Your pc is not used, set nimby OFF")
-            setNimbyOff().catch(()=>{})
-          }
-          else {
-            // TODO else display message
-            log.info("Your have height cpu usage, let nimby ON")
-          }
-        })*/
-      }
-      else {
-        // DAY MODE
-        if (electron.powerMonitor.getSystemIdleTime() < CONFIG.systemIdleTimeLimit) {
-          setNimbyOn().catch(()=>{})
+          })*/
         }
         else {
-          checkForProcess()
+          // DAY MODE
+          if (electron.powerMonitor.getSystemIdleTime() < CONFIG.systemIdleTimeLimit) {
+            setNimbyOn().catch(()=>{})
+          }
+          else {
+            checkForProcess()
+          }
         }
       }
-    }
-  })
+    })
+    .catch((error) => {
+      log.error(error)
+    })
 
   updateTrayIcon()
 }
@@ -369,6 +373,7 @@ function run() {
       return 0;
     })
     .catch(function (error) {
+      log.error(error)
       return -1;
     })
 }

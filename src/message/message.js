@@ -1,4 +1,4 @@
-const { BrowserWindow, ipcMain, remote } = require("electron");
+const { BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 let QUOTES = require('../config/quotes.json')
 
@@ -8,11 +8,12 @@ async function messageJob(taskId) {
   return new Promise((resolve, reject) => {
     let msgBox = new BrowserWindow({
       width: 500,
-      height: 350,
+      height: 375,
       center: true,
-      frame: false,
+      frame: true,
       resizable: false,
       movable: true,
+      autoHideMenuBar: true,
       title: "Nimby",
       alwaysOnTop: true,
       webPreferences: { nodeIntegration: true }

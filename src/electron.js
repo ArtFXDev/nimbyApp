@@ -72,19 +72,7 @@ app.on("ready", () => {
       miniGame.run();
       nimby.nimbyEvent(item[1])
     });*/
-  runNimby().then(() => {
-    miniGame.run();
-    nimby.nimbyEvent("avril")
-  });
-
-
-  const date_stop = new Date(2021, 4 - 1, 1, 17, 0, 0);
-  const stop = schedule.scheduleJob(date_stop, function(){
-    log.info('Event end.');
-    miniGame.stop();
-    nimby.nimbyEvent(false)
-
-  })
+  runNimby()
 });
 
 function runNimby() {
