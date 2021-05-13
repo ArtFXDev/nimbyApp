@@ -12,7 +12,6 @@ const find = require('find-process');
 const axios = require('axios');
 const electron = require('electron');
 const log = require('electron-log');
-const minigame = require('../minigame/miniGame')
 
 const { messageJob, closeMessage, messageLogs } = require('../message/message')
 
@@ -123,7 +122,7 @@ function checkIfUsed() {
           }
           else {
             checkCPUUsage().then((response) => {
-              if (response) {
+              if (response === true) {
                 log.info("Your pc is not used, set nimby OFF")
                 setNimbyOff().catch(() => {})
               } else {
@@ -415,11 +414,16 @@ ipcMain.on('see_logs', () => {
 ipcMain.on('event_toggle', (e, isEvent) => {
   console.log("isEvent : " + isEvent)
   if (!isEvent) {
-    minigame.stop();
+    // minigame.stop();
   }
 })
 ipcMain.on('isEvent', (event) => {
   event.sender.send('event', isEvent);
 });
+ipcMain.on('open_event', (e) => {
+  const { runGame } = require('../minigame/jesus/jesus');
+  runGame()
+})
+
 
 module.exports = { run, nimbyEvent };

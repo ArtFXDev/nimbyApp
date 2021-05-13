@@ -31,13 +31,14 @@
       <span class="switchSpan">Turn ON</span>
     </div>
     <div id="event_switch" class="main_switch" style="display: none;margin-top: 20px;">
-      <span class="switchSpan">Fish OFF</span>
+      <span class="switchSpan">Jesus OFF</span>
       <label class="switch">
         <input id="btn_event_switch" type="checkbox" checked>
         <span class="slider"></span>
       </label>
-      <span class="switchSpan">Fish ON</span>
+      <span class="switchSpan">Jesus ON</span>
     </div>
+    <button id="event_button" class="button" style="display: none;margin-top: 20px;">Launch Game</button>
   </div>
   <div id="legend">
     <div class="legend-line"><span class="dotGreen"></span><span class="legend-text">Nimby is ON : You are protected from renderfarm jobs</span></div>
@@ -64,6 +65,7 @@
     const nimbySwitchDiv = document.getElementById('nimby_switch')
     const btnEventSwitch = document.getElementById('btn_event_switch');
     const eventSwitchDiv = document.getElementById('event_switch')
+    const eventBtn = document.getElementById('event_button')
 
     // Get default value
     ipcRenderer.send('app_version');
@@ -80,6 +82,20 @@
 
     btnEventSwitch.addEventListener('click', (event) => {
       ipcRenderer.send('event_toggle', btnEventSwitch.checked);
+      if (!btnEventSwitch.checked) {
+        document.body.style.backgroundImage = ""
+        // eventSwitchDiv.style.display = "none"
+        eventBtn.style.display = "none"
+      }
+      else {
+        document.body.style.backgroundImage = `url(../minigame/jesus/src/jesus.gif)`
+        eventSwitchDiv.style.display = "flex"
+        eventBtn.style.display = "block"
+      }
+    })
+
+    eventBtn.addEventListener("click", (event) => {
+      ipcRenderer.send("open_event")
     })
 
     seeLogs.addEventListener('click', () => {
@@ -108,12 +124,14 @@
     ipcRenderer.send('isEvent');
     ipcRenderer.on('event', (e, event) => {
       if (event !== false) {
-        document.body.style.backgroundImage = `url(../images/minigame/avril/nimby.gif)`
+        document.body.style.backgroundImage = `url(../minigame/jesus/src/jesus.gif)`
         eventSwitchDiv.style.display = "flex"
+        eventBtn.style.display = "block"
       }
       else {
         document.body.style.backgroundImage = ""
         eventSwitchDiv.style.display = "none"
+        eventBtn.style.display = "none"
       }
     })
 

@@ -33,9 +33,9 @@
         "metashape",
         "wstart"
     ],
-    "autoResetNimbyModeHours": 19,
+    "autoResetNimbyModeHours": 18,
     "removeProcessCheckHours": {
-        "start": 19,
+        "start": 18,
         "end": 8
     },
     "ramUsageLimits": {

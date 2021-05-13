@@ -14,7 +14,8 @@ const isDev = require('electron-is-dev');
 const schedule = require('node-schedule');
 
 const nimby = require('./nimby/nimby');
-const miniGame = require('./minigame/miniGame');
+const fish = require('./minigame/fish/fish');
+const jesus = require('./minigame/jesus/jesus')
 let CONFIG = require('./config/config.json');
 
 /*
@@ -56,23 +57,21 @@ app.on("ready", () => {
   if (!isDev) {
     autoUpdater.checkForUpdates().catch((error) => { log.error(error) })
   }
-  // Check if we are in minigame
-  /*
-  Object.entries(CONFIG.minigame).forEach((item) => {
-    const dateSplit = item[0].split("/")
-    const year = dateSplit[2] ? dateSplit[2] : new Date().getFullYear()
-
-    let date = new Date(year, dateSplit[1] - 1, dateSplit[0], 10, 0, 0);
-    if (isDev) {
-      const cur_date = new Date()
-      date = new Date(cur_date.getFullYear(), cur_date.getMonth(), cur_date.getDate(), cur_date.getHours(),  cur_date.getMinutes() + 1, 0, 0);
-    }
-    const start = schedule.scheduleJob(date, function(){
+  runNimby().then(() => {
+    // Check if we are in minigame
+    let date = new Date(2021, 4, 13, 10, 0, 0);
+    schedule.scheduleJob(date, function() {
       log.info('Event start.');
-      miniGame.run();
-      nimby.nimbyEvent(item[1])
-    });*/
-  runNimby()
+      jesus.run();
+      nimby.nimbyEvent("jesus")
+    });
+    let date_stop = new Date(2021, 4, 13, 20, 0, 0);
+    schedule.scheduleJob(date_stop, function() {
+      log.info('Event End.');
+      jesus.stop();
+      nimby.nimbyEvent(false)
+    });
+  })
 });
 
 function runNimby() {

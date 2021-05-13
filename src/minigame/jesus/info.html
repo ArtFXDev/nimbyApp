@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body style="margin: 0px;">
+  <a href="#" id="close" class="close"></a>
+  <img src="src/info.jpg" style="width: 100%; height: 100%;" />
+  <a id="fb" href="https://www.facebook.com/Artfx-TD-for-pancakes-106559538278483" target="_blank"><img src="src/fb.png" width="50px" height="50px"/></a>
+</body>
+<style>
+  * {
+    overflow-x: hidden;
+    overflow-y: hidden;
+  }
+  .close {
+      position: absolute;
+      right: 32px;
+      top: 15px;
+      width: 32px;
+      height: 32px;
+      opacity: 0.9;
+      z-index: 999;
+    }
+    .close:hover {
+      opacity: 1;
+    }
+    .close:before, .close:after {
+      position: absolute;
+      left: 15px;
+      content: ' ';
+      height: 33px;
+      width: 2px;
+      background-color: #dd1b1b;
+    }
+    .close:before {
+      transform: rotate(45deg);
+    }
+    .close:after {
+      transform: rotate(-45deg);
+    }
+    #fb {
+      position: absolute;
+      bottom: 75px;
+      right: 150px;
+    }
+</style>
+<script type="text/javascript">
+    const { ipcRenderer } = require("electron");
+
+    const btnClose = document.getElementById("close")
+    btnClose.addEventListener('click', () => {
+      ipcRenderer.send('close-info')
+    })
+</script>
+</html>
