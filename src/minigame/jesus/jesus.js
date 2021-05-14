@@ -1,11 +1,12 @@
 const { app, screen, ipcMain } = require("electron");
 const { MongoClient } = require('mongodb');
-const { BrowserWindow } = require("electron-acrylic-window");
+const { BrowserWindow, Vibrancy } = require("electron-acrylic-window");
 const log = require('electron-log');
 const os = require("os");
 const path = require('path');
 const pass = require('../../config/pass.json')
 
+const isWindows10 = process.platform === 'win32' && os.release().split('.')[0] === '10'
 let hostname = os.hostname();
 let score = 0
 let jesusWin = null
@@ -39,11 +40,16 @@ function runGame() {
 
 function game() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-
-  const vibrancyOp = {
-    theme: 'dark',
-    effect: 'blur',
-    disableOnBlur: false,
+  let vibrancyOp = Vibrancy
+  if (isWindows10) {
+    const vibrancyOp = {
+      theme: 'dark',
+      effect: 'blur',
+      disableOnBlur: false,
+    }
+  }
+  else {
+    vibrancyOp = 'dark'
   }
 
   jesusWin = new BrowserWindow({
