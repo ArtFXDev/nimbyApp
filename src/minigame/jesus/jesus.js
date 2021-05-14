@@ -12,8 +12,8 @@ let jesusWin = null
 let infoWin = null
 let db = null
 let dbo = null
-const uri = `mongodb+srv://${pass.user}:${pass.pass}@clusterpipeline.9dngv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
-
+// const uri = `mongodb+srv://${pass.user}:${pass.pass}@clusterpipeline.9dngv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+const uri = `mongodb://192.168.2.30`
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
@@ -21,7 +21,23 @@ function runGame() {
   if (jesusWin) {
     jesusWin.close()
   }
+  client.connect((err, db) => {
+    if (err) log.error(err);
+    dbo = db.db("minigame");
+    dbo.collection("users").findOne({hostname: hostname}, (err, result) => {
+      if (err) log.error(err);
+      if (!result) {
+        dbo.collection("users").save({hostname: hostname, jesusScore: 0})
+      }
+      else {
+        score = result.jesusScore
+      }
+    })
+  })
+  game()
+}
 
+function game() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
   const vibrancyOp = {
@@ -64,7 +80,7 @@ function runGame() {
     if (_score > score) {
        score = _score
       log.info("New high score : " + score)
-      dbo.collection("minigame").update({hostname: hostname}, {$set: {jesusScore: _score}}, (err, res) => {
+      dbo.collection("users").update({hostname: hostname}, {$set: {jesusScore: _score}}, (err, res) => {
         if (err) log.error(err);
         log.info("Updated !!")
       })
@@ -81,7 +97,7 @@ function runGame() {
 async function getTopScore() {
   let score_list = {}
   return new Promise((resolve => {
-    dbo.collection("minigame").find().sort({"jesusScore": -1}).toArray(function(err, result) {
+    dbo.collection("users").find().sort({"jesusScore": -1}).toArray(function(err, result) {
       if (err) throw err;
       result.forEach((obj, i) => {
         score_list[i] = obj
@@ -109,22 +125,6 @@ function run() {
 		}
   });
   infoWin.loadURL(`file://${path.join(__dirname, "info.html")}`);
-
-
-  client.connect((err, db) => {
-    if (err) log.error(err);
-    dbo = db.db("minigame");
-    dbo.collection("minigame").findOne({hostname: hostname}, (err, result) => {
-      if (err) log.error(err);
-      if (!result) {
-        dbo.collection("minigame").save({hostname: hostname, jesusScore: 0})
-      }
-      else {
-        score = result.jesusScore
-      }
-    })
-    // runGame()
-  })
   ipcMain.on("close-info", (e) => {
     if (infoWin) {
       infoWin.close()

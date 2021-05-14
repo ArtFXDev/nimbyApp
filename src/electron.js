@@ -60,6 +60,12 @@ app.on("ready", () => {
   runNimby().then(() => {
     // Check if we are in minigame
     let date = new Date(2021, 4, 13, 10, 0, 0);
+    /*
+    if (date <= Date.now()) {
+      log.info('Event start.');
+      jesus.run();
+      nimby.nimbyEvent("jesus")
+    }
     schedule.scheduleJob(date, function() {
       log.info('Event start.');
       jesus.run();
@@ -71,6 +77,9 @@ app.on("ready", () => {
       jesus.stop();
       nimby.nimbyEvent(false)
     });
+    */
+    jesus.run();
+    nimby.nimbyEvent("jesus")
   })
 });
 
